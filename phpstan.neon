@@ -1,0 +1,20 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+        # You can add other directories you want to analyze, e.g.:
+        # - routes/
+        # - config/
+        # - tests/
+
+    # Level 9 is the strictest. Start lower (e.g., 5) and gradually increase.
+    level: 5
+
+    # Optional: Specify your Laravel project's root if not detected automatically
+    # larastan:
+    #    projectPath: .
+
+    # Optional: Check for missing @var tags on properties
+    # checkMissingIterableValueType: false
