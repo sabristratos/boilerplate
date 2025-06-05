@@ -5,15 +5,12 @@ namespace Tests\Feature\Auth;
 use App\Livewire\Livewire\Auth\Register;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
 {
-    use RefreshDatabase;
-
     /** @test */
     public function registration_page_can_be_rendered()
     {

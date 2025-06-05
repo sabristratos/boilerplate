@@ -1,8 +1,94 @@
 <div>
-    <flux:heading size="xl">{{ __('Analytics Dashboard') }}</flux:heading>
+    <flux:heading size="xl">{{ __('Admin Hub') }}</flux:heading>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        <!-- User Management Card -->
+        <flux:card class="space-y-4">
+            <flux:heading size="md">{{ __('User Management') }}</flux:heading>
+            <flux:text class="text-sm text-gray-600 dark:text-gray-400">
+                {{ __('Manage user accounts, profiles, and permissions.') }}
+            </flux:text>
+            <div class="space-y-2">
+                <flux:button href="{{ route('admin.users') }}" variant="outline" class="w-full justify-start">
+                    <flux:icon name="users" class="mr-2" />
+                    {{ __('All Users') }}
+                </flux:button>
+                <flux:button href="{{ route('admin.roles') }}" variant="outline" class="w-full justify-start">
+                    <flux:icon name="shield-check" class="mr-2" />
+                    {{ __('Roles & Permissions') }}
+                </flux:button>
+            </div>
+        </flux:card>
+
+        <!-- Content Management Card -->
+        <flux:card class="space-y-4">
+            <flux:heading size="md">{{ __('Content Management') }}</flux:heading>
+            <flux:text class="text-sm text-gray-600 dark:text-gray-400">
+                {{ __('Manage website content, pages, and media.') }}
+            </flux:text>
+            <div class="space-y-2">
+                <flux:button href="{{ route('admin.taxonomies') }}" variant="outline" class="w-full justify-start">
+                    <flux:icon name="tag" class="mr-2" />
+                    {{ __('Taxonomies') }}
+                </flux:button>
+                <flux:button href="{{ route('admin.attachments') }}" variant="outline" class="w-full justify-start">
+                    <flux:icon name="photo" class="mr-2" />
+                    {{ __('Media') }}
+                </flux:button>
+            </div>
+        </flux:card>
+
+        <!-- System Settings Card -->
+        <flux:card class="space-y-4">
+            <flux:heading size="md">{{ __('System Settings') }}</flux:heading>
+            <flux:text class="text-sm text-gray-600 dark:text-gray-400">
+                {{ __('Configure system settings and preferences.') }}
+            </flux:text>
+            <div class="space-y-2">
+                <flux:button href="{{ route('admin.settings') }}" variant="outline" class="w-full justify-start">
+                    <flux:icon name="cog-6-tooth" class="mr-2" />
+                    {{ __('General Settings') }}
+                </flux:button>
+                <flux:button href="{{ route('admin.activity-logs') }}" variant="outline" class="w-full justify-start">
+                    <flux:icon name="document-magnifying-glass" class="mr-2" />
+                    {{ __('Activity Logs') }}
+                </flux:button>
+            </div>
+        </flux:card>
+    </div>
+
     <flux:button variant="outline" wire:click="loadAnalyticsData" class="my-4" icon="arrow-path">
         {{ __('Refresh Data') }}
     </flux:button>
+
+    <!-- Quick Stats Section -->
+    <flux:heading size="lg" class="mb-6 mt-8">{{ __('Quick Stats') }}</flux:heading>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <flux:card>
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900 mr-4">
+                    <flux:icon name="users" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                    <flux:text class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ __('Total Users') }}</flux:text>
+                    <flux:heading size="lg" class="font-semibold">{{ number_format($totalUsers) }}</flux:heading>
+                </div>
+            </div>
+        </flux:card>
+
+        <flux:card>
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-amber-100 dark:bg-amber-900 mr-4">
+                    <flux:icon name="photo" class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                    <flux:text class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ __('Media Files') }}</flux:text>
+                    <flux:heading size="lg" class="font-semibold">{{ number_format($totalMediaFiles) }}</flux:heading>
+                </div>
+            </div>
+        </flux:card>
+    </div>
+    {{-- End Quick Stats --}}
 
     <flux:separator variant="subtle" class="my-8" />
 
@@ -35,8 +121,8 @@
                 <flux:heading size="lg" class="mb-4">{{ __('Page Views (Last 30 Days)') }}</flux:heading>
                 <flux:chart :value="$pageViewsOverTimeData" class="h-72">
                     <flux:chart.svg>
-                        <flux:chart.line field="views" class="text-primary-500" curve="smooth" />
-                        <flux:chart.area field="views" class="text-primary-500/10 dark:text-primary-400/10" curve="smooth" />
+                        <flux:chart.line field="views" class="text-[var(--color-accent)]" curve="smooth" />
+                        <flux:chart.area field="views" class="text-[var(--color-accent)]/10 dark:text-[var(--color-accent-content)]/10" curve="smooth" />
                         <flux:chart.axis axis="x" field="date" :format="['month' => 'short', 'day' => 'numeric']">
                             <flux:chart.axis.tick />
                             <flux:chart.axis.line />
@@ -79,12 +165,24 @@
                 <x-flux.empty-state icon="link" heading="{{__('No referrer data yet')}}" />
             @else
                 <ul class="space-y-2">
-                    @foreach($topReferrers as $referrer)
+                    @foreach($topReferrers as $referrerEntry)
                         <li class="flex justify-between items-center text-sm">
-                            <a href="{{ $referrer['referrer'] }}" target="_blank" rel="noopener noreferrer" class="truncate text-primary-600 dark:text-primary-400 hover:underline" title="{{ $referrer['referrer'] }}">
-                                {{ Str::limit(parse_url($referrer['referrer'], PHP_URL_HOST) ?: $referrer['referrer'], 50) }}
-                            </a>
-                            <flux:badge color="green">{{ number_format($referrer['views']) }} {{ __('visits') }}</flux:badge>
+                            @php
+                                $hostDisplay = Str::limit($referrerEntry['host'], 50);
+                                // Attempt to make a clickable link. If host doesn't have a scheme, prepend http.
+                                $linkHref = (parse_url($referrerEntry['host'], PHP_URL_SCHEME) ? '' : 'http://') . $referrerEntry['host'];
+                                if ($referrerEntry['host'] === 'unknown' || filter_var($linkHref, FILTER_VALIDATE_URL) === false) {
+                                    $linkHref = null; // Don't link if it's 'unknown' or not a valid URL structure
+                                }
+                            @endphp
+                            @if($linkHref)
+                                <a href="{{ $linkHref }}" target="_blank" rel="noopener noreferrer" class="truncate text-primary-600 dark:text-primary-400 hover:underline" title="{{ $referrerEntry['host'] }}">
+                                    {{ $hostDisplay }}
+                                </a>
+                            @else
+                                <span class="truncate dark:text-zinc-300" title="{{ $referrerEntry['host'] }}">{{ $hostDisplay }}</span>
+                            @endif
+                            <flux:badge color="green">{{ number_format($referrerEntry['views']) }} {{ __('visits') }}</flux:badge>
                         </li>
                     @endforeach
                 </ul>

@@ -5,10 +5,14 @@ namespace App\Livewire\Admin;
 use App\Facades\ActivityLogger;
 use App\Models\User;
 use App\Models\Role;
+use App\Notifications\Admin\UserCreatedNotification;
+use App\Notifications\Admin\UserDeletedNotification;
+use App\Notifications\User\NewUserWelcomeNotification;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -130,6 +134,7 @@ class UserManagement extends Component
         $this->validate();
 
         try {
+            $plainPassword = $this->password; 
             $user = User::create([
                 'name' => $this->name,
                 'email' => $this->email,
@@ -140,6 +145,7 @@ class UserManagement extends Component
                 $user->roles()->attach($this->selectedRoles);
             }
 
+            // Log activity
             ActivityLogger::logCreated(
                 $user,
                 auth()->user(),
@@ -150,6 +156,24 @@ class UserManagement extends Component
                 ],
                 'user'
             );
+
+            // Send welcome email to the new user
+            try {
+                $user->notify(new NewUserWelcomeNotification($user, $plainPassword));
+            } catch (\Exception $e) {
+                Log::error('Failed to send welcome email to user ' . $user->email . ': ' . $e->getMessage());
+                // Non-critical, so we don't re-throw or show a user-facing error for this
+            }
+
+            // Notify admin users
+            try {
+                $adminUsers = User::whereHas('roles', fn($q) => $q->where('slug', 'admin'))->get();
+                if ($adminUsers->isNotEmpty() && auth()->check()) {
+                    Notification::send($adminUsers, new UserCreatedNotification($user, auth()->user()));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send UserCreatedNotification to admins: ' . $e->getMessage());
+            }
 
             $this->closeModal();
             Flux::toast(
@@ -290,8 +314,16 @@ class UserManagement extends Component
 
         try {
             $user = User::findOrFail($this->user_id);
+            $performingUser = auth()->user();
 
-            if ($user->id === auth()->id()) {
+            if (!$performingUser) {
+                 Log::warning('Attempted to delete user without an authenticated performing user.');
+                 Flux::toast(text: __('Could not identify performing user. Action aborted.'), heading: __('Error'), variant: 'danger');
+                 return;
+            }
+
+
+            if ($user->id === $performingUser->id) {
                 Flux::toast(
                     text: __('You cannot delete your own account.'),
                     heading: __('Error'),
@@ -301,23 +333,35 @@ class UserManagement extends Component
                 return;
             }
 
-            $userData = [
+            $userDataForNotification = [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => $user->roles->pluck('id')->toArray(),
-                'created_at' => $user->created_at->toDateTimeString(),
             ];
 
+            // Log activity before deletion
             ActivityLogger::logDeleted(
                 $user,
-                auth()->user(),
-                $userData,
+                $performingUser,
+                $userDataForNotification + [
+                    'roles' => $user->roles->pluck('id')->toArray(),
+                    'created_at' => $user->created_at->toDateTimeString(),
+                ],
                 'user'
             );
 
             $user->roles()->detach();
             $user->delete();
+
+            // Notify admin users
+            try {
+                $adminUsers = User::whereHas('roles', fn($q) => $q->where('slug', 'admin'))->get();
+                if ($adminUsers->isNotEmpty()) {
+                    Notification::send($adminUsers, new UserDeletedNotification($userDataForNotification, $performingUser));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send UserDeletedNotification to admins: ' . $e->getMessage());
+            }
 
             $this->closeModal();
             Flux::toast(

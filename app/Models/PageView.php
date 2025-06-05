@@ -27,6 +27,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $platform_name
  * @property Carbon $visited_at
  *
+ * @property string $date
+ * @property int $views
  * @property-read User|null $user
  */
 class PageView extends Model
@@ -43,7 +45,7 @@ class PageView extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'user_id',
@@ -76,7 +78,7 @@ class PageView extends Model
     /**
      * Get the user associated with the page view, if any.
      *
-     * @return BelongsTo<User, PageView>
+     * @return BelongsTo<User, self>
      */
     public function user(): BelongsTo
     {

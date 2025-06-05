@@ -20,11 +20,11 @@ class AttachmentService
      * Upload a file and create an attachment record.
      *
      * @param UploadedFile $file The file to upload.
-     * @param Model $attachable The model to attach the file to.
+     * @param \Illuminate\Database\Eloquent\Model&\App\Models\Traits\HasAttachments $attachable The model to attach the file to.
      * @param string|null $collection Optional collection name.
      * @param array<string, mixed> $meta Optional metadata.
      * @param array<string, mixed> $options Options for storage and optimization, overriding global settings.
-     * @return Attachment The created attachment record.
+     * @return \App\Models\Attachment The created attachment record.
      * @throws \Exception If the attachable model does not have a key, or if file type is not allowed.
      */
     public function upload(UploadedFile $file, Model $attachable, ?string $collection = null, array $meta = [], array $options = []): Attachment

@@ -1,7 +1,7 @@
 @props(['title' => setting('site_name', config('app.name', 'Laravel'))])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', setting('default_language', app()->getLocale())) }}"
+<html lang="{{ app()->getLocale() }}"
     @class([
         'dark' => setting('enable_dark_mode', true) &&
                  (setting('theme', 'light') === 'dark' ||

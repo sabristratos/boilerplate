@@ -7,16 +7,11 @@
                 <flux:brand href="#" name="{{ \App\Facades\Settings::get('site_name', config('app.name', 'Laravel')) }}" class="px-2" />
             @endif
 
-            <flux:input as="button" variant="filled" placeholder="Search..." icon="magnifying-glass" />
-
             <flux:navlist variant="outline">
                 <flux:navlist.item icon="home" href="{{ route('admin.dashboard') }}" :current="request()->routeIs('admin.dashboard')">Dashboard</flux:navlist.item>
                 <flux:navlist.item icon="chart-bar" href="{{ route('admin.analytics') }}" :current="request()->routeIs('admin.analytics')">{{ __('Analytics') }}</flux:navlist.item>
 
                 <flux:navlist.group icon="user" expandable heading="Content" class="grid">
-                    <flux:navlist.item href="#" :current="false">Pages</flux:navlist.item>
-                    <flux:navlist.item href="#" :current="false">Posts</flux:navlist.item>
-                    <flux:navlist.item href="#" :current="false">Media</flux:navlist.item>
                     <flux:navlist.item href="{{ route('admin.attachments') }}" :current="request()->routeIs('admin.attachments')">Attachments</flux:navlist.item>
                     <flux:navlist.item href="{{ route('admin.taxonomies') }}" :current="request()->routeIs('admin.taxonomies')">Taxonomies</flux:navlist.item>
                 </flux:navlist.group>
@@ -33,11 +28,77 @@
 
             <flux:spacer />
 
+            {{-- New container for icon buttons --}}
+            <div class="mt-4 mb-2 px-2 flex justify-between items-center space-x-2 max-lg:hidden">
+                {{-- Notifications Icon Button --}}
+                <div x-data="{ unreadCount: @js(app(\App\Livewire\Admin\Notifications\NotificationFlyout::class)->unreadCount) }" x-on:unread-notifications-count-updated.window="unreadCount = $event.detail.count" class="relative inline-block">
+                    <flux:button
+                        variant="filled"
+                        icon="bell"
+                        x-on:click.prevent="$flux.modal('notification-flyout').show()"
+                        aria-label="{{ __('View notifications') }}"
+                        :tooltip="__('Notifications')"
+                        tooltip:position="top"
+                        square
+                    >
+                        <template x-if="unreadCount > 0">
+                            <span class="absolute -top-1 -right-1 h-4 w-4 min-w-[1rem] px-1 flex items-center justify-center text-xs font-semibold text-white bg-red-500 rounded-full" x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                        </template>
+                    </flux:button>
+                </div>
 
-            <flux:navlist variant="outline">
-                <flux:navlist.item icon="cog-6-tooth" href="{{ route('admin.settings') }}" :current="request()->routeIs('admin.settings')">Settings</flux:navlist.item>
-                <flux:navlist.item icon="information-circle" href="#" :current="false">Help</flux:navlist.item>
-            </flux:navlist>
+                {{-- Language Switcher Dropdown --}}
+                <flux:dropdown position="top" align="center">
+                    <flux:button
+                        variant="filled"
+                        icon="language"
+                        aria-label="{{ __('Change language') }}"
+                        :tooltip="__('Language')"
+                        tooltip:position="top"
+                        square
+                    />
+                    <flux:menu>
+                        <flux:menu.item href="{{ route('language.switch', ['locale' => 'en']) }}">
+                            English
+                            @if(app()->getLocale() === 'en')
+                                <x-slot:icon>
+                                    <flux:icon icon="check" variant="mini" class="text-green-500" />
+                                </x-slot:icon>
+                            @endif
+                        </flux:menu.item>
+                        <flux:menu.item href="{{ route('language.switch', ['locale' => 'fr']) }}">
+                            Français
+                            @if(app()->getLocale() === 'fr')
+                                <x-slot:icon>
+                                    <flux:icon icon="check" variant="mini" class="text-green-500" />
+                                </x-slot:icon>
+                            @endif
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+
+                {{-- Settings Icon Button --}}
+                <flux:button
+                    variant="filled"
+                    href="{{ route('admin.settings') }}"
+                    icon="cog-6-tooth"
+                    aria-label="{{ __('Settings') }}"
+                    :tooltip="__('Settings')"
+                    tooltip:position="top"
+                    square
+                />
+
+                {{-- Help Icon Button --}}
+                <flux:button
+                    variant="filled"
+                    href="#"
+                    icon="information-circle"
+                    aria-label="{{ __('Help') }}"
+                    :tooltip="__('Help')"
+                    tooltip:position="top"
+                    square
+                />
+            </div>
 
             <flux:dropdown position="top" align="left" class="max-lg:hidden">
                 <flux:profile name="{{ Auth::user()->name ?? 'Admin User' }}" />
@@ -76,6 +137,22 @@
 
             <flux:spacer />
 
+            {{-- Bell Icon for SM screens --}}
+            <div x-data="{ unreadCount: @js(app(\App\Livewire\Admin\Notifications\NotificationFlyout::class)->unreadCount) }" x-on:unread-notifications-count-updated.window="unreadCount = $event.detail.count" class="relative">
+                <flux:button
+                    variant="ghost"
+                    icon="bell"
+                    x-on:click.prevent="$flux.modal('notification-flyout').show()"
+                    aria-label="{{ __('View notifications') }}"
+                    :tooltip="__('Notifications')"
+                    tooltip:position="bottom"
+                >
+                    <template x-if="unreadCount > 0">
+                        <span class="absolute -top-1 -right-1 h-4 w-4 min-w-[1rem] px-1 flex items-center justify-center text-xs font-semibold text-white bg-red-500 rounded-full" x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
+                    </template>
+                </flux:button>
+            </div>
+
             <flux:dropdown align="right">
                 <flux:profile class="-mr-4" />
 
@@ -97,4 +174,6 @@
             {{ $slot }}
         </flux:main>
     </div>
+
+    @livewire('admin.notifications.notification-flyout')
 </x-app-layout>

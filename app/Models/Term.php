@@ -106,4 +106,21 @@ class Term extends Model
 
         return $path;
     }
+
+    /**
+     * Get all descendants of this term (children, children of children, etc.).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Term>
+     */
+    public function descendants(): \Illuminate\Database\Eloquent\Collection
+    {
+        $descendants = new \Illuminate\Database\Eloquent\Collection();
+        foreach ($this->children as $child) {
+            $descendants->push($child);
+            if ($child->children()->exists()) { // Optimization: only recurse if children exist
+                $descendants = $descendants->merge($child->descendants());
+            }
+        }
+        return $descendants;
+    }
 }

@@ -21,10 +21,10 @@
                 <div class="space-y-4">
                     <flux:input label="{{ __('Site Name') }}" placeholder="{{ __('My Awesome Site') }}" />
                     <flux:input label="{{ __('Site Description') }}" placeholder="{{ __('A brief description of your site') }}" />
-                    <flux:select label="{{ __('Default Language') }}">
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
+                    <flux:select label="{{ __('Default Language') }}" wire:model.defer="default_language">
+                        @foreach(config('app.available_locales', ['en' => 'English']) as $localeCode => $localeName)
+                            <option value="{{ $localeCode }}">{{ $localeName }}</option>
+                        @endforeach
                     </flux:select>
                 </div>
             </div>

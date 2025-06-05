@@ -6,14 +6,11 @@ use App\Models\Taxonomy;
 use App\Models\Term;
 use App\Models\User;
 use App\Models\Traits\HasTaxonomies;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class TaxonomiesTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_can_create_taxonomy()
     {
         // Create a taxonomy

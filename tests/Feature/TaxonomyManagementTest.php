@@ -6,15 +6,12 @@ use App\Livewire\Admin\TaxonomyManagement;
 use App\Models\Taxonomy;
 use App\Models\Term;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class TaxonomyManagementTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected function setUp(): void
     {
         parent::setUp();

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Interfaces\HasRoles;
 use App\Models\Traits\HasAttachments;
+use App\Models\Traits\HasTaxonomies;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
@@ -26,16 +27,19 @@ use Illuminate\Support\Carbon;
  * @property array|null $two_factor_recovery_codes // <--- ADD/UPDATE THIS LINE
  * @property Carbon|null $two_factor_confirmed_at
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
+ * @property-read DatabaseNotificationCollection $unreadNotifications
  * @property-read int|null $notifications_count
  * @property-read Collection|Role[] $roles
  * @property-read int|null $roles_count
  * @property-read Collection|Attachment[] $attachments
  * @property-read int|null $attachments_count
+ * @mixin HasTaxonomies
+ * @mixin \App\Models\Traits\HasAttachments
  */
 class User extends Authenticatable implements MustVerifyEmail, HasRoles
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasAttachments;
+    use HasFactory, Notifiable, HasAttachments, HasTaxonomies;
 
     /**
      * Determine if two-factor authentication has been enabled.

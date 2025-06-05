@@ -67,6 +67,16 @@ class TrackPageViewMiddleware
                 return true;
             }
         }
+
+        // Exclude common asset file extensions
+        $path = $request->path();
+        $excludedExtensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'map'];
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+        if (in_array(strtolower($extension), $excludedExtensions, true)) {
+            return true;
+        }
+
         return false;
     }
 

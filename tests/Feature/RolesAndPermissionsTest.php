@@ -5,13 +5,10 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Permission;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RolesAndPermissionsTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_user_can_be_assigned_a_role()
     {
         // Create a user

@@ -94,3 +94,11 @@ Route::middleware('auth')->group(function () {
 
 // Logout route
 Route::post('/logout', Logout::class)->middleware('auth')->name('logout');
+
+Route::get('/language/{locale}', function ($locale) {
+    if (array_key_exists($locale, config('app.available_locales', []))) {
+        app()->setLocale($locale);
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('language.switch');

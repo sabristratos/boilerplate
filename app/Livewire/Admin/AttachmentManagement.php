@@ -66,7 +66,7 @@ class AttachmentManagement extends Component
 
 
     /**
-     * @return array<string,array>
+     * @return array<string,string>
      */
     protected function rules(): array
     {

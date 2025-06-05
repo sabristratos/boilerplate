@@ -6,15 +6,12 @@ use App\Livewire\Livewire\Auth\ForgotPassword;
 use App\Livewire\Livewire\Auth\ResetPassword;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
 {
-    use RefreshDatabase;
-
     /** @test */
     public function forgot_password_page_can_be_rendered()
     {
