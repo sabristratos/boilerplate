@@ -89,7 +89,7 @@ class Login extends Component
                 'auth'
             );
 
-            $this->redirect(route('dashboard'));
+            $this->redirect(route('admin.dashboard'));
         } else {
             // Check if failed login attempts should be logged
             if (Settings::get('log_failed_login_attempts', true)) {

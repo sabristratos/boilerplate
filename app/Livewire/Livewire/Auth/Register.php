@@ -94,7 +94,7 @@ class Register extends Component
 
         Auth::login($user);
 
-        $this->redirect(route('dashboard'));
+        $this->redirect(route('admin.dashboard'));
     }
 
     /**

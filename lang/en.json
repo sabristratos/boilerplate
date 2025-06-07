@@ -320,7 +320,6 @@
     "Terms for": "Terms for",
     "Thank you for joining us!": "Thank you for joining us!",
     "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.": "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.",
-    "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\\'t receive the email, we will gladly send you another.": "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\\'t receive the email, we will gladly send you another.",
     "The SMTP server host": "The SMTP server host",
     "The SMTP server password": "The SMTP server password",
     "The SMTP server port": "The SMTP server port",
@@ -337,7 +336,7 @@
     "The name field is required.": "The name field is required.",
     "The name of your site": "The name of your site",
     "The name that will be used to send emails": "The name that will be used to send emails",
-    "The new file\\'s original name will be stored, but the path on disk (and thus the URL) will not change.": "The new file\\'s original name will be stored, but the path on disk (and thus the URL) will not change.",
+    "The new file's original name will be stored, but the path on disk (and thus the URL) will not change.": "The new file's original name will be stored, but the path on disk (and thus the URL) will not change.",
     "The password confirmation does not match.": "The password confirmation does not match.",
     "The password confirmation field is required when setting a new password.": "The password confirmation field is required when setting a new password.",
     "The password field is required.": "The password field is required.",
@@ -421,5 +420,13 @@
     "uploaded": "uploaded",
     "user@example.com": "user@example.com",
     "views": "views",
-    "visits": "visits"
+    "visits": "visits",
+    "Dashboard": "Dashboard",
+    "Content": "Content",
+    "Change language": "Change language",
+    "Language": "Language",
+    "Français": "French",
+    "Admin User": "Admin User",
+    "Profile": "Profile",
+    "Logout": "Logout"
 }

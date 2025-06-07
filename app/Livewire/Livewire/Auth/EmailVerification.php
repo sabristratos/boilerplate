@@ -34,7 +34,7 @@ class EmailVerification extends Component
     public function sendVerificationEmail(): void
     {
         if (Auth::user()->hasVerifiedEmail()) {
-            $this->redirect(route('dashboard'));
+            $this->redirect(route('admin.dashboard'));
             return;
         }
 

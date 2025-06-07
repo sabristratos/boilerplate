@@ -37,3 +37,39 @@
         --color-accent-foreground: var(--color-white);
     }
 }
+
+/* --- Button: Fill From Center Effect --- */
+.btn-fill-effect {
+    /* Ensure stacking context and overflow for pseudo-element */
+    position: relative;
+    overflow: hidden;
+    /* z-index: 1; */ /* Base z-index, content will be higher */
+    /* The transition for color is now handled by Tailwind's hover states on the button's text color directly */
+}
+
+.btn-fill-effect::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background-color: var(--btn-fill-color, #059669); /* Default to emerald-600 if var not set */
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease-in-out, height 0.4s ease-in-out;
+    z-index: 0; /* Ensure fill is behind the text (span with z-10) */
+}
+
+.btn-fill-effect:hover::before,
+.btn-fill-effect:focus::before /* Optional: also trigger on focus */
+{
+    width: 225%; /* Adjust size to ensure it covers the button */
+    height: 225%;
+}
+
+/* Ensure button text stays on top and is not affected by the fill's color directly if it was transparent */
+.btn-fill-effect > span {
+    position: relative;
+    z-index: 1;
+}

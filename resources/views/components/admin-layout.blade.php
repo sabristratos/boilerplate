@@ -8,21 +8,21 @@
             @endif
 
             <flux:navlist variant="outline">
-                <flux:navlist.item icon="home" href="{{ route('admin.dashboard') }}" :current="request()->routeIs('admin.dashboard')">Dashboard</flux:navlist.item>
+                <flux:navlist.item icon="home" href="{{ route('admin.dashboard') }}" :current="request()->routeIs('admin.dashboard')">{{ __('Dashboard') }}</flux:navlist.item>
                 <flux:navlist.item icon="chart-bar" href="{{ route('admin.analytics') }}" :current="request()->routeIs('admin.analytics')">{{ __('Analytics') }}</flux:navlist.item>
 
-                <flux:navlist.group icon="user" expandable heading="Content" class="grid">
-                    <flux:navlist.item href="{{ route('admin.attachments') }}" :current="request()->routeIs('admin.attachments')">Attachments</flux:navlist.item>
-                    <flux:navlist.item href="{{ route('admin.taxonomies') }}" :current="request()->routeIs('admin.taxonomies')">Taxonomies</flux:navlist.item>
+                <flux:navlist.group icon="user" expandable heading="{{ __('Content') }}" class="grid">
+                    <flux:navlist.item href="{{ route('admin.attachments') }}" :current="request()->routeIs('admin.attachments')">{{ __('Attachments') }}</flux:navlist.item>
+                    <flux:navlist.item href="{{ route('admin.taxonomies') }}" :current="request()->routeIs('admin.taxonomies')">{{ __('Taxonomies') }}</flux:navlist.item>
                 </flux:navlist.group>
 
-                <flux:navlist.group expandable heading="Users" class="grid">
-                    <flux:navlist.item href="{{ route('admin.users') }}" :current="request()->routeIs('admin.users')">All Users</flux:navlist.item>
-                    <flux:navlist.item href="{{ route('admin.roles') }}" :current="request()->routeIs('admin.roles')">Roles</flux:navlist.item>
+                <flux:navlist.group expandable heading="{{ __('Users') }}" class="grid">
+                    <flux:navlist.item href="{{ route('admin.users') }}" :current="request()->routeIs('admin.users')">{{ __('All Users') }}</flux:navlist.item>
+                    <flux:navlist.item href="{{ route('admin.roles') }}" :current="request()->routeIs('admin.roles')">{{ __('Roles') }}</flux:navlist.item>
                 </flux:navlist.group>
 
-                <flux:navlist.group expandable heading="System" class="grid">
-                    <flux:navlist.item href="{{ route('admin.activity-logs') }}" :current="request()->routeIs('admin.activity-logs')">Activity Logs</flux:navlist.item>
+                <flux:navlist.group expandable heading="{{ __('System') }}" class="grid">
+                    <flux:navlist.item href="{{ route('admin.activity-logs') }}" :current="request()->routeIs('admin.activity-logs')">{{ __('Activity Logs') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
@@ -59,7 +59,7 @@
                     />
                     <flux:menu>
                         <flux:menu.item href="{{ route('language.switch', ['locale' => 'en']) }}">
-                            English
+                            {{ __('English') }}
                             @if(app()->getLocale() === 'en')
                                 <x-slot:icon>
                                     <flux:icon icon="check" variant="mini" class="text-green-500" />
@@ -67,7 +67,7 @@
                             @endif
                         </flux:menu.item>
                         <flux:menu.item href="{{ route('language.switch', ['locale' => 'fr']) }}">
-                            Français
+                            {{ __('Français') }}
                             @if(app()->getLocale() === 'fr')
                                 <x-slot:icon>
                                     <flux:icon icon="check" variant="mini" class="text-green-500" />
@@ -101,11 +101,11 @@
             </div>
 
             <flux:dropdown position="top" align="left" class="max-lg:hidden">
-                <flux:profile name="{{ Auth::user()->name ?? 'Admin User' }}" />
+                <flux:profile name="{{ Auth::user()->name ?? __('Admin User') }}" />
 
                 <flux:menu>
-                    <flux:menu.item href="{{ route('admin.profile') }}" icon="user">Profile</flux:menu.item>
-                    <flux:menu.item href="{{ route('admin.settings') }}" icon="cog-6-tooth">Settings</flux:menu.item>
+                    <flux:menu.item href="{{ route('admin.profile') }}" icon="user">{{ __('Profile') }}</flux:menu.item>
+                    <flux:menu.item href="{{ route('admin.settings') }}" icon="cog-6-tooth">{{ __('Settings') }}</flux:menu.item>
                     @if(App\Facades\Settings::get('enable_dark_mode', true))
                     <flux:menu.item
                         x-data
@@ -126,7 +126,7 @@
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                        <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle">{{ __('Logout') }}</flux:menu.item>
                     </form>
                 </flux:menu>
             </flux:dropdown>
@@ -157,14 +157,14 @@
                 <flux:profile class="-mr-4" />
 
                 <flux:menu>
-                    <flux:menu.item href="{{ route('admin.profile') }}" icon="user">Profile</flux:menu.item>
-                    <flux:menu.item href="#" icon="cog-6-tooth">Settings</flux:menu.item>
+                    <flux:menu.item href="{{ route('admin.profile') }}" icon="user">{{ __('Profile') }}</flux:menu.item>
+                    <flux:menu.item href="#" icon="cog-6-tooth">{{ __('Settings') }}</flux:menu.item>
 
                     <flux:menu.separator />
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                        <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle">{{ __('Logout') }}</flux:menu.item>
                     </form>
                 </flux:menu>
             </flux:dropdown>

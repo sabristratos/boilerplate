@@ -9,7 +9,7 @@
                     </a>
                     <div class="flex items-center space-x-4">
                         @auth
-                            <a href="{{ route('dashboard') }}" class="text-sm text-zinc-700 dark:text-zinc-300 hover:text-primary-600 dark:hover:text-primary-500">Dashboard</a>
+                            <a href="{{ route('admin.dashboard') }}" class="text-sm text-zinc-700 dark:text-zinc-300 hover:text-primary-600 dark:hover:text-primary-500">Dashboard</a>
                         @else
                             <a href="{{ route('login') }}" class="text-sm text-zinc-700 dark:text-zinc-300 hover:text-primary-600 dark:hover:text-primary-500">Log in</a>
                             <a href="{{ route('register') }}" class="text-sm text-zinc-700 dark:text-zinc-300 hover:text-primary-600 dark:hover:text-primary-500">Register</a>

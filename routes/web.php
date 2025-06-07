@@ -32,9 +32,6 @@ Route::get('/css/dynamic.css', [\App\Http\Controllers\DynamicCssController::clas
 
 // Dashboard route (protected)
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureTwoFactorChallengeIsComplete::class])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
 
     // Two-factor authentication setup
     Route::get('/user/two-factor-authentication', TwoFactorAuthentication::class)->name('two-factor.setup');
@@ -81,14 +78,14 @@ Route::middleware('auth')->group(function () {
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route('admin.dashboard'));
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return redirect()->intended(route('dashboard').'?verified=1');
+        return redirect()->intended(route('admin.dashboard').'?verified=1');
     })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 });
 
