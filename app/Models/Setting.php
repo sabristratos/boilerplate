@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SettingType;
+use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -65,11 +66,43 @@ class Setting extends Model
      */
     public function getFormattedValueAttribute()
     {
-        return match ($this->type) {
-            SettingType::BOOLEAN, SettingType::CHECKBOX => (bool) $this->value,
-            SettingType::NUMBER => (int) $this->value,
-            SettingType::JSON => json_decode($this->value, true),
-            default => $this->value,
-        };
+        switch ($this->type) {
+            case SettingType::BOOLEAN:
+            case SettingType::CHECKBOX:
+                return (bool) $this->value;
+            case SettingType::NUMBER:
+                return (int) $this->value;
+            case SettingType::JSON:
+                return json_decode($this->value, true);
+            case SettingType::FILE:
+                $attachment = Attachment::find($this->value);
+
+                return $attachment ? $attachment->url . '?v=' . $attachment->updated_at->timestamp : null;
+            default:
+                return $this->value;
+        }
+    }
+
+    /**
+     * Get the translated options for the current locale.
+     *
+     * @return array
+     */
+    public function getTranslatedOptionsAttribute(): array
+    {
+        $locale = app()->getLocale();
+        $options = $this->getTranslation('options', $locale);
+
+        if (is_array($options)) {
+            return $options;
+        }
+
+        // Fallback for older format
+        $allOptions = $this->getTranslations('options');
+        if (isset($allOptions[$locale])) {
+            return $allOptions[$locale];
+        }
+
+        return $allOptions['en'] ?? [];
     }
 }

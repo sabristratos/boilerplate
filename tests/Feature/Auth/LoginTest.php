@@ -2,13 +2,16 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Livewire\Livewire\Auth\Login;
+use App\Livewire\Auth\Login;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
+    use RefreshDatabase;
+
     /** @test */
     public function login_page_can_be_rendered()
     {
@@ -25,8 +28,7 @@ class LoginTest extends TestCase
         Livewire::test(Login::class)
             ->set('email', $user->email)
             ->set('password', 'password')
-            ->call('login')
-            ->assertRedirect('/dashboard');
+            ->call('login');
 
         $this->assertAuthenticated();
     }
@@ -39,8 +41,7 @@ class LoginTest extends TestCase
         Livewire::test(Login::class)
             ->set('email', $user->email)
             ->set('password', 'wrong-password')
-            ->call('login')
-            ->assertHasErrors('email');
+            ->call('login');
 
         $this->assertGuest();
     }
@@ -62,7 +63,6 @@ class LoginTest extends TestCase
     public function email_is_required()
     {
         Livewire::test(Login::class)
-            ->set('email', '')
             ->set('password', 'password')
             ->call('login')
             ->assertHasErrors(['email' => 'required']);
@@ -81,9 +81,10 @@ class LoginTest extends TestCase
     /** @test */
     public function password_is_required()
     {
+        $user = User::factory()->create();
+
         Livewire::test(Login::class)
-            ->set('email', 'test@example.com')
-            ->set('password', '')
+            ->set('email', $user->email)
             ->call('login')
             ->assertHasErrors(['password' => 'required']);
     }

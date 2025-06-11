@@ -9,11 +9,11 @@
                 {{ __('Manage user accounts, profiles, and permissions.') }}
             </flux:text>
             <div class="space-y-2">
-                <flux:button href="{{ route('admin.users') }}" variant="outline" class="w-full justify-start">
+                <flux:button href="{{ route('admin.users.index') }}" variant="outline" class="w-full justify-start">
                     <flux:icon name="users" class="mr-2" />
                     {{ __('All Users') }}
                 </flux:button>
-                <flux:button href="{{ route('admin.roles') }}" variant="outline" class="w-full justify-start">
+                <flux:button href="{{ route('admin.roles.index') }}" variant="outline" class="w-full justify-start">
                     <flux:icon name="shield-check" class="mr-2" />
                     {{ __('Roles & Permissions') }}
                 </flux:button>
@@ -27,7 +27,7 @@
                 {{ __('Manage website content, pages, and media.') }}
             </flux:text>
             <div class="space-y-2">
-                <flux:button href="{{ route('admin.taxonomies') }}" variant="outline" class="w-full justify-start">
+                <flux:button href="{{ route('admin.taxonomies.index') }}" variant="outline" class="w-full justify-start">
                     <flux:icon name="tag" class="mr-2" />
                     {{ __('Taxonomies') }}
                 </flux:button>
@@ -64,17 +64,22 @@
     <!-- Quick Stats Section -->
     <flux:heading size="lg" class="mb-6 mt-8">{{ __('Quick Stats') }}</flux:heading>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <flux:card>
-            <div class="flex items-center">
-                <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900 mr-4">
-                    <flux:icon name="users" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <div class="flex items-center justify-between">
                 <div>
-                    <flux:text class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ __('Total Users') }}</flux:text>
-                    <flux:heading size="lg" class="font-semibold">{{ number_format($totalUsers) }}</flux:heading>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Total Users') }}</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $totalUsers }}</p>
+                </div>
+                <div class="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 p-3 rounded-full">
+                    <flux:icon name="user-group" class="w-6 h-6" />
                 </div>
             </div>
-        </flux:card>
+            <div class="mt-4">
+                <flux:button href="{{ route('admin.users.index') }}" variant="outline" class="w-full justify-start">
+                    {{ __('Manage Users') }}
+                </flux:button>
+            </div>
+        </div>
 
         <flux:card>
             <div class="flex items-center">
@@ -119,7 +124,7 @@
         <div class="mb-8">
             <flux:card>
                 <flux:heading size="lg" class="mb-4">{{ __('Page Views (Last 30 Days)') }}</flux:heading>
-                <flux:chart :value="$pageViewsOverTimeData" class="h-72">
+                <flux:chart :value="json_encode($pageViewsOverTimeData)" class="h-72">
                     <flux:chart.svg>
                         <flux:chart.line field="views" class="text-[var(--color-accent)]" curve="smooth" />
                         <flux:chart.area field="views" class="text-[var(--color-accent)]/10 dark:text-[var(--color-accent-content)]/10" curve="smooth" />
@@ -146,7 +151,7 @@
         <flux:card>
             <flux:heading size="lg" class="mb-4">{{ __('Top Pages (All Time)') }}</flux:heading>
             @if(empty($topPages))
-                <x-flux.empty-state icon="document-text" heading="{{__('No page data yet')}}" />
+                <x-empty-state icon="document-text" heading="{{__('No page data yet')}}" />
             @else
                 <ul class="space-y-2">
                     @foreach($topPages as $page)
@@ -162,7 +167,7 @@
         <flux:card>
             <flux:heading size="lg" class="mb-4">{{ __('Top Referrers (All Time)') }}</flux:heading>
             @if(empty($topReferrers))
-                <x-flux.empty-state icon="link" heading="{{__('No referrer data yet')}}" />
+                <x-empty-state icon="link" heading="{{__('No referrer data yet')}}" />
             @else
                 <ul class="space-y-2">
                     @foreach($topReferrers as $referrerEntry)
@@ -194,7 +199,7 @@
         <flux:card>
             <flux:heading size="lg" class="mb-4">{{ __('Top Browsers') }}</flux:heading>
             @if(empty($topBrowsers))
-                <x-flux.empty-state icon="cursor-arrow-rays" heading="{{__('No browser data yet')}}" />
+                <x-empty-state icon="cursor-arrow-rays" heading="{{__('No browser data yet')}}" />
             @else
                 <ul class="space-y-2">
                     @foreach($topBrowsers as $browser)
@@ -210,7 +215,7 @@
         <flux:card>
             <flux:heading size="lg" class="mb-4">{{ __('Top Platforms (OS)') }}</flux:heading>
             @if(empty($topPlatforms))
-                <x-flux.empty-state icon="computer-desktop" heading="{{__('No platform data yet')}}" />
+                <x-empty-state icon="computer-desktop" heading="{{__('No platform data yet')}}" />
             @else
                 <ul class="space-y-2">
                     @foreach($topPlatforms as $platform)

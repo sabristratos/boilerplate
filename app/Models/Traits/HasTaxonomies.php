@@ -31,9 +31,9 @@ trait HasTaxonomies
     /**
      * Add a term to the model.
      */
-    public function addTerm(Term $term)
+    public function addTerm(Term $term): void
     {
-        return $this->terms()->attach($term);
+        $this->terms()->attach($term);
     }
 
     /**

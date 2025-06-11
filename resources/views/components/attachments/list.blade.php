@@ -2,10 +2,10 @@
 
 <div {{ $attributes }}>
     @if($attachments->isEmpty())
-        <flux:empty-state
-            icon="document"
-            heading="{{ __('No attachments') }}"
-            description="{{ __($emptyMessage) }}"
+        <x-empty-state
+            icon="document-arrow-up"
+            heading="{{ __('No attachments found') }}"
+            description="{{ __('Upload a file to get started.') }}"
         />
     @else
         <div class="space-y-3">

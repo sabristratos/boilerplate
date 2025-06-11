@@ -7,20 +7,24 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Lang;
 
 class ExampleNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public string $message;
+    public ?string $actionText;
+    public ?string $actionUrl;
+
     /**
      * Create a new notification instance.
      */
-    public function __construct(
-        protected string $message,
-        protected string $actionText = '',
-        protected string $actionUrl = ''
-    ) {
-        //
+    public function __construct(string $message, ?string $actionText = null, ?string $actionUrl = null)
+    {
+        $this->message = $message;
+        $this->actionText = $actionText;
+        $this->actionUrl = $actionUrl;
     }
 
     /**
@@ -39,15 +43,17 @@ class ExampleNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
-            ->subject('Example Notification')
+        $mailMessage = (new MailMessage)
+            ->subject(Lang::get('Example Notification'))
             ->line($this->message);
 
         if ($this->actionText && $this->actionUrl) {
-            $mail->action($this->actionText, $this->actionUrl);
+            $mailMessage->action($this->actionText, $this->actionUrl);
         }
 
-        return $mail->line('Thank you for using our application!');
+        $mailMessage->line(Lang::get('Thank you for using our application!'));
+
+        return $mailMessage;
     }
 
     /**
@@ -58,9 +64,9 @@ class ExampleNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'title' => 'Example Notification',
             'message' => $this->message,
-            'action_text' => $this->actionText,
-            'action_url' => $this->actionUrl,
+            'url' => $this->actionUrl,
         ];
     }
 }

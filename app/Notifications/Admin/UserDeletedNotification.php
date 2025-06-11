@@ -5,6 +5,7 @@ namespace App\Notifications\Admin;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\HtmlString;
 
@@ -30,10 +31,9 @@ class UserDeletedNotification extends Notification implements ShouldQueue
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed  $notifiable
      * @return array<int, string>
      */
-    public function via(mixed $notifiable): array
+    public function via(object $notifiable): array
     {
         return ['database'];
     }
@@ -41,30 +41,17 @@ class UserDeletedNotification extends Notification implements ShouldQueue
     /**
      * Get the array representation of the notification.
      *
-     * @param  mixed  $notifiable
      * @return array<string, mixed>
      */
-    public function toArray(mixed $notifiable): array
+    public function toArray(object $notifiable): array
     {
+        $name = $this->deletedUserData['name'] ?? 'Unknown';
+        $email = $this->deletedUserData['email'] ?? 'Unknown';
+
         return [
-            'deleted_user_id' => $this->deletedUserData['id'] ?? null,
-            'deleted_user_name' => $this->deletedUserData['name'] ?? __('[Unknown User]'),
-            'performing_user_id' => $this->performingUser->id,
-            'performing_user_name' => $this->performingUser->name,
-            'message' => tap(new HtmlString(__(
-                'User <strong>:deleted_user_name</strong> (ID: :deleted_user_id) was deleted by <strong>:performing_user_name</strong>.',
-                [
-                    'deleted_user_name' => $this->deletedUserData['name'] ?? __('[Unknown User]'),
-                    'deleted_user_id' => $this->deletedUserData['id'] ?? __('[Unknown ID]'),
-                    'performing_user_name' => $this->performingUser->name,
-                ]
-            )), function ($htmlString) {
-                if (empty(trim($htmlString->toHtml()))) {
-                    return new HtmlString('User deleted notification (message is missing).'); // Default fallback
-                }
-                return $htmlString;
-            }),
-            'url' => route('admin.user-management'),
+            'title' => 'User Deleted',
+            'message' => "User: {$name} ({$email}) has been deleted.",
+            'url' => route('admin.users.index'),
         ];
     }
 } 

@@ -3,11 +3,13 @@
 namespace App\Livewire\Admin;
 
 use App\Models\ActivityLog;
+use Flux\Flux;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Layout('components.admin-layout')]
+#[Layout('components.layouts.admin')]
 class ActivityLogManagement extends Component
 {
     use WithPagination;
@@ -26,8 +28,45 @@ class ActivityLogManagement extends Component
     public $sortField = 'created_at';
     public $sortDirection = 'desc';
 
+    // Modal states
+    public bool $showDetailsModal = false;
+    public bool $showClearLogsModal = false;
+
     // Selected log for details
-    public $selectedLog = null;
+    public ?ActivityLog $selectedLog = null;
+
+    /**
+     * Show confirmation modal for clearing logs.
+     */
+    public function confirmClearLogs()
+    {
+        Gate::authorize('delete-activity-logs');
+        $this->showClearLogsModal = true;
+    }
+
+    /**
+     * Cancel clearing logs.
+     */
+    public function cancelClearLogs()
+    {
+        $this->showClearLogsModal = false;
+    }
+
+    /**
+     * Clear all activity logs.
+     */
+    public function clearLogs()
+    {
+        Gate::authorize('delete-activity-logs');
+        ActivityLog::truncate();
+        $this->showClearLogsModal = false;
+
+        Flux::toast(
+            text: 'All activity logs have been cleared.',
+            heading: 'Logs Cleared',
+            variant: 'success'
+        );
+    }
 
     /**
      * Reset filters
@@ -53,9 +92,10 @@ class ActivityLogManagement extends Component
     /**
      * View log details
      */
-    public function viewDetails(ActivityLog $log)
+    public function viewDetails(int $logId)
     {
-        $this->selectedLog = $log;
+        $this->selectedLog = ActivityLog::find($logId);
+        $this->showDetailsModal = true;
     }
 
     /**
@@ -63,6 +103,7 @@ class ActivityLogManagement extends Component
      */
     public function closeDetails()
     {
+        $this->showDetailsModal = false;
         $this->selectedLog = null;
     }
 

@@ -5,6 +5,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div class="md:col-span-1">
+            @can('create-attachments')
             <flux:card>
                 <flux:heading size="lg" class="mb-4">{{ __('Upload New File') }}</flux:heading>
 
@@ -86,6 +87,7 @@
                     </div>
                 </form>
             </flux:card>
+            @endcan
         </div>
 
         <div class="md:col-span-2">
@@ -102,7 +104,7 @@
             </div>
 
             @if($attachments->isEmpty())
-                <x-flux.empty-state
+                <x-empty-state
                     icon="document-arrow-up"
                     heading="{{ __('No attachments found') }}"
                     description="{{ $search ? __('Try a different search term.') : __('Upload your first file to get started.') }}"
@@ -139,6 +141,7 @@
                                             {{ __('Copy URL') }}
                                         </flux:menu.item>
                                         <flux:menu.separator />
+                                        @can('delete-attachments')
                                         <flux:menu.item
                                             icon="trash"
                                             variant="danger"
@@ -147,6 +150,7 @@
                                         >
                                             {{ __('Delete') }}
                                         </flux:menu.item>
+                                        @endcan
                                     </flux:menu>
                                 </flux:dropdown>
                             </x-slot:actions>

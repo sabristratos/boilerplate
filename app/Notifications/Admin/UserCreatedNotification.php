@@ -32,45 +32,24 @@ class UserCreatedNotification extends Notification implements ShouldQueue
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed  $notifiable
      * @return array<int, string>
      */
-    public function via(mixed $notifiable): array
+    public function via(object $notifiable): array
     {
-        return ['database']; 
+        return ['database'];
     }
 
     /**
      * Get the array representation of the notification.
      *
-     * @param  mixed  $notifiable
      * @return array<string, mixed>
      */
-    public function toArray(mixed $notifiable): array
+    public function toArray(object $notifiable): array
     {
-        $translationKey = 'User <strong>:created_user_name</strong> was created by <strong>:performing_user_name</strong>.';
-        $translationParams = [
-            'created_user_name' => $this->createdUser->name,
-            'performing_user_name' => $this->performingUser->name,
-        ];
-        
-        $translatedMessage = __($translationKey, $translationParams);
-        
-        Log::debug('[UserCreatedNotification] Translated message type: ' . gettype($translatedMessage));
-        Log::debug('[UserCreatedNotification] Translated message content:', is_array($translatedMessage) ? $translatedMessage : [$translatedMessage]);
-
-        $finalMessage = (string) $translatedMessage;
-        if (empty(trim($finalMessage))) {
-            $finalMessage = 'User created notification (message is missing).'; // Default fallback
-        }
-
         return [
-            'created_user_id' => $this->createdUser->id,
-            'created_user_name' => $this->createdUser->name,
-            'performing_user_id' => $this->performingUser->id,
-            'performing_user_name' => $this->performingUser->name,
-            'message' => $finalMessage,
-            'url' => route('admin.users'),
+            'title' => 'A new user has registered.',
+            'message' => "User: {$this->createdUser->name} ({$this->createdUser->email})",
+            'url' => route('admin.users.edit', $this->createdUser),
         ];
     }
 } 

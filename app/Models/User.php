@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\UserStatus;
+use App\Interfaces\Attachable;
 use App\Interfaces\HasRoles;
 use App\Models\Traits\HasAttachments;
 use App\Models\Traits\HasTaxonomies;
@@ -19,12 +21,13 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
+ * @property UserStatus $status
  * @property string $password
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string|null $two_factor_secret
- * @property array|null $two_factor_recovery_codes // <--- ADD/UPDATE THIS LINE
+ * @property array|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read DatabaseNotificationCollection $unreadNotifications
@@ -33,13 +36,24 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $roles_count
  * @property-read Collection|Attachment[] $attachments
  * @property-read int|null $attachments_count
- * @mixin HasTaxonomies
+ * @mixin \App\Models\Traits\HasTaxonomies
  * @mixin \App\Models\Traits\HasAttachments
  */
-class User extends Authenticatable implements MustVerifyEmail, HasRoles
+class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attachable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasAttachments, HasTaxonomies;
+
+    public function getAvatarUrl(): string
+    {
+        $avatar = $this->attachments()->where('collection', 'avatar')->first();
+
+        if ($avatar) {
+            return $avatar->url;
+        }
+
+        return 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($this->email)));
+    }
 
     /**
      * Determine if two-factor authentication has been enabled.
@@ -174,6 +188,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles
         'name',
         'email',
         'password',
+        'status',
     ];
 
     /**
@@ -198,6 +213,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => UserStatus::class,
             'two_factor_confirmed_at' => 'datetime',
             'two_factor_recovery_codes' => 'array',
         ];

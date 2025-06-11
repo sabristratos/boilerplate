@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Facades\ActivityLogger;
 use App\Models\Setting;
+use App\Models\User;
+use App\Notifications\Admin\SettingChangedNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 
 class SettingsService
 {
@@ -63,8 +67,29 @@ class SettingsService
             return false;
         }
 
+        $oldValue = $setting->value;
         $setting->value = $value;
+
+        if (!$setting->isDirty('value')) {
+            return true;
+        }
+
         $result = $setting->save();
+
+        if ($result) {
+            $causer = auth()->user();
+            if ($causer) {
+                ActivityLogger::logUpdated(
+                    $setting,
+                    $causer,
+                    ['old' => $oldValue, 'new' => $value]
+                );
+
+                // Notify all admin users
+                $admins = User::whereHas('roles', fn ($query) => $query->where('name', 'admin'))->get();
+                Notification::send($admins, new SettingChangedNotification($setting, $causer, $oldValue, $value));
+            }
+        }
 
         // Clear the cache
         $this->clearCache();

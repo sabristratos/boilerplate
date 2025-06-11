@@ -12,13 +12,17 @@ use App\Services\AttachmentService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Flux\Flux;
 
-#[Layout('components.admin-layout')]
+/**
+ * Attachment management component
+ */
+#[Layout('components.layouts.admin')]
 class AttachmentManagement extends Component
 {
     use WithFileUploads;
@@ -84,6 +88,7 @@ class AttachmentManagement extends Component
      */
     public function uploadFile(AttachmentService $attachmentService): void
     {
+        Gate::authorize('create-attachments');
         $this->validate($this->getFileValidationRules());
 
         /** @var User|null $user */
@@ -247,8 +252,10 @@ class AttachmentManagement extends Component
      */
     public function delete(Attachment $attachment, AttachmentService $attachmentService): void
     {
+        Gate::authorize('delete-attachments');
         /** @var User|null $user */
         $user = Auth::user();
+
         if (!$user) {
             Flux::toast(
                 text: __('User not authenticated for this action.'),
@@ -259,26 +266,18 @@ class AttachmentManagement extends Component
         }
 
         try {
-            $attachmentData = [
-                'id' => $attachment->id,
-                'filename' => $attachment->filename,
-                'size' => $attachment->size,
-                'mime_type' => $attachment->mime_type,
-                'collection' => $attachment->collection,
-                'path' => $attachment->path,
-                'attachable_type' => $attachment->attachable_type,
-                'attachable_id' => $attachment->attachable_id,
-            ];
-
             ActivityLogger::logDeleted(
                 $attachment,
                 $user,
-                $attachmentData,
+                [
+                    'filename' => $attachment->filename,
+                    'size' => $attachment->size,
+                    'mime_type' => $attachment->mime_type,
+                    'collection' => $attachment->collection,
+                ],
                 'attachment'
             );
-
             $attachmentService->delete($attachment);
-
             Flux::toast(
                 text: __('File deleted successfully.'),
                 heading: __('Success'),

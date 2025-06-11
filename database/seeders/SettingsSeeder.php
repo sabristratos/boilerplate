@@ -21,7 +21,7 @@ class SettingsSeeder extends Seeder
         $settingGroups = [
             [
                 'slug' => 'general',
-                'icon' => 'cog',
+                'icon' => 'cog-6-tooth',
                 'order' => 1,
                 'name' => ['en' => 'General', 'fr' => 'Général'],
                 'description' => ['en' => 'General system settings and preferences', 'fr' => 'Paramètres et préférences générales du système'],
@@ -42,7 +42,7 @@ class SettingsSeeder extends Seeder
             ],
             [
                 'slug' => 'security',
-                'icon' => 'shield',
+                'icon' => 'shield-check',
                 'order' => 4,
                 'name' => ['en' => 'Security', 'fr' => 'Sécurité'],
                 'description' => ['en' => 'Configure security settings for your application', 'fr' => 'Configurez les paramètres de sécurité de votre application'],
@@ -61,6 +61,34 @@ class SettingsSeeder extends Seeder
                 'name' => ['en' => 'Attachments', 'fr' => 'Pièces Jointes'],
                 'description' => ['en' => 'Configure settings for file attachments and uploads.', 'fr' => 'Configurez les paramètres pour les pièces jointes et les téléversements.'],
             ],
+            [
+                'slug' => 'site-identity',
+                'icon' => 'identification',
+                'order' => 7,
+                'name' => ['en' => 'Site Identity', 'fr' => 'Identité du site'],
+                'description' => ['en' => 'Configure site identity settings like favicon and copyright.', 'fr' => 'Configurez les paramètres d\'identité du site comme le favicon et le copyright.'],
+            ],
+            [
+                'slug' => 'integrations',
+                'icon' => 'puzzle-piece',
+                'order' => 8,
+                'name' => ['en' => 'Integrations', 'fr' => 'Intégrations'],
+                'description' => ['en' => 'Configure settings for third-party integrations.', 'fr' => 'Configurez les paramètres pour les intégrations tierces.'],
+            ],
+            [
+                'slug' => 'contact',
+                'icon' => 'user-circle',
+                'order' => 9,
+                'name' => ['en' => 'Contact Information', 'fr' => 'Coordonnées'],
+                'description' => ['en' => 'Configure contact information for your site.', 'fr' => 'Configurez les coordonnées de votre site.'],
+            ],
+            [
+                'slug' => 'seo',
+                'icon' => 'chart-pie',
+                'order' => 10,
+                'name' => ['en' => 'SEO', 'fr' => 'SEO'],
+                'description' => ['en' => 'Configure SEO settings for your site.', 'fr' => 'Configurez les paramètres SEO de votre site.'],
+            ],
         ];
 
         foreach ($settingGroups as $groupData) {
@@ -73,6 +101,10 @@ class SettingsSeeder extends Seeder
         $securityGroup = SettingGroup::where('slug', 'security')->first();
         $emailGroup = SettingGroup::where('slug', 'email')->first();
         $attachmentGroup = SettingGroup::where('slug', 'attachments')->first();
+        $siteIdentityGroup = SettingGroup::where('slug', 'site-identity')->first();
+        $integrationsGroup = SettingGroup::where('slug', 'integrations')->first();
+        $contactGroup = SettingGroup::where('slug', 'contact')->first();
+        $seoGroup = SettingGroup::where('slug', 'seo')->first();
 
         $settings = [
             // General Settings
@@ -111,6 +143,21 @@ class SettingsSeeder extends Seeder
                 'options' => [
                     'en' => ['en' => 'English', 'es' => 'Spanish', 'fr' => 'French'],
                     'fr' => ['en' => 'Anglais', 'es' => 'Espagnol', 'fr' => 'Français'],
+                ]
+            ],
+            [
+                'setting_group_id' => $generalGroup->id,
+                'key' => 'available_languages',
+                'value' => json_encode(['en', 'fr']),
+                'type' => SettingType::MULTISELECT,
+                'is_public' => true,
+                'is_required' => true,
+                'order' => 4,
+                'display_name' => ['en' => 'Available Languages', 'fr' => 'Langues disponibles'],
+                'description' => ['en' => 'The languages available on your site', 'fr' => 'Les langues disponibles sur votre site'],
+                'options' => [
+                    'en' => ['en' => 'English', 'fr' => 'French'],
+                    'fr' => ['en' => 'Anglais', 'fr' => 'Français'],
                 ]
             ],
 
@@ -447,6 +494,182 @@ class SettingsSeeder extends Seeder
                     'en' => ['public' => 'Public', 'local' => 'Local (Private)', 's3' => 'S3 (Amazon AWS)'],
                     'fr' => ['public' => 'Public', 'local' => 'Local (Privé)', 's3' => 'S3 (Amazon AWS)'],
                 ]
+            ],
+
+            // Site Identity Settings
+            [
+                'setting_group_id' => $siteIdentityGroup->id,
+                'key' => 'favicon',
+                'type' => SettingType::FILE,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 1,
+                'display_name' => ['en' => 'Favicon', 'fr' => 'Favicon'],
+                'description' => ['en' => 'The favicon for your site.', 'fr' => 'Le favicon de votre site.'],
+            ],
+            [
+                'setting_group_id' => $siteIdentityGroup->id,
+                'key' => 'footer_copyright_text',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 2,
+                'display_name' => ['en' => 'Footer Copyright Text', 'fr' => 'Texte de copyright du pied de page'],
+                'description' => ['en' => 'The copyright text displayed in the footer. You can use PHP tags like {year}.', 'fr' => 'Le texte de copyright affiché dans le pied de page. Vous pouvez utiliser des balises PHP comme {year}.'],
+                'value' => '© {year} My Awesome Site. All rights reserved.',
+            ],
+
+            // Integrations Settings
+            [
+                'setting_group_id' => $integrationsGroup->id,
+                'key' => 'meta_tags',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 1,
+                'display_name' => ['en' => 'Meta Tags', 'fr' => 'Balises Méta'],
+                'description' => ['en' => 'Custom meta tags to be added to the head of your site.', 'fr' => 'Balises méta personnalisées à ajouter à l\'en-tête de votre site.'],
+            ],
+            [
+                'setting_group_id' => $integrationsGroup->id,
+                'key' => 'google_analytics_id',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 2,
+                'display_name' => ['en' => 'Google Analytics 4 ID', 'fr' => 'ID Google Analytics 4'],
+                'description' => ['en' => 'Your Google Analytics 4 measurement ID (e.g., G-XXXXXXXXXX).', 'fr' => 'Votre ID de mesure Google Analytics 4 (par exemple, G-XXXXXXXXXX).'],
+            ],
+            [
+                'setting_group_id' => $integrationsGroup->id,
+                'key' => 'google_tag_manager_id',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 3,
+                'display_name' => ['en' => 'Google Tag Manager ID', 'fr' => 'ID Google Tag Manager'],
+                'description' => ['en' => 'Your Google Tag Manager container ID (e.g., GTM-XXXXXXX).', 'fr' => 'Votre ID de conteneur Google Tag Manager (par exemple, GTM-XXXXXXX).'],
+            ],
+            [
+                'setting_group_id' => $integrationsGroup->id,
+                'key' => 'custom_header_code',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 4,
+                'display_name' => ['en' => 'Custom Header Code', 'fr' => 'Code d\'en-tête personnalisé'],
+                'description' => ['en' => 'Custom code to be added to the head of your site (e.g., for analytics, verification).', 'fr' => 'Code personnalisé à ajouter à l\'en-tête de votre site (par exemple, pour les analyses, la vérification).'],
+            ],
+            [
+                'setting_group_id' => $integrationsGroup->id,
+                'key' => 'custom_body_code',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 5,
+                'display_name' => ['en' => 'Custom Body Code', 'fr' => 'Code de corps personnalisé'],
+                'description' => ['en' => 'Custom code to be added to the beginning of the body tag.', 'fr' => 'Code personnalisé à ajouter au début de la balise body.'],
+            ],
+
+            // Contact Information Settings
+            [
+                'setting_group_id' => $contactGroup->id,
+                'key' => 'primary_phone',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 1,
+                'display_name' => ['en' => 'Primary Phone', 'fr' => 'Téléphone principal'],
+            ],
+            [
+                'setting_group_id' => $contactGroup->id,
+                'key' => 'secondary_phone',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 2,
+                'display_name' => ['en' => 'Secondary Phone', 'fr' => 'Téléphone secondaire'],
+            ],
+            [
+                'setting_group_id' => $contactGroup->id,
+                'key' => 'primary_email',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 3,
+                'display_name' => ['en' => 'Primary Email', 'fr' => 'E-mail principal'],
+            ],
+            [
+                'setting_group_id' => $contactGroup->id,
+                'key' => 'secondary_email',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 4,
+                'display_name' => ['en' => 'Secondary Email', 'fr' => 'E-mail secondaire'],
+            ],
+            [
+                'setting_group_id' => $contactGroup->id,
+                'key' => 'address',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 5,
+                'display_name' => ['en' => 'Address', 'fr' => 'Adresse'],
+            ],
+            [
+                'setting_group_id' => $contactGroup->id,
+                'key' => 'google_maps_embed',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 6,
+                'display_name' => ['en' => 'Google Maps Embed', 'fr' => 'Intégration Google Maps'],
+                'description' => ['en' => 'The HTML embed code for your Google Maps location.', 'fr' => 'Le code d\'intégration HTML pour votre emplacement Google Maps.'],
+            ],
+
+            // SEO Settings
+            [
+                'setting_group_id' => $seoGroup->id,
+                'key' => 'seo_title_template',
+                'type' => SettingType::TEXT,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 1,
+                'display_name' => ['en' => 'SEO Title Template', 'fr' => 'Modèle de titre SEO'],
+                'description' => ['en' => 'Template for SEO titles. Use {title} and {site_name}.', 'fr' => 'Modèle pour les titres SEO. Utilisez {title} et {site_name}.'],
+                'value' => '{title} - {site_name}',
+            ],
+            [
+                'setting_group_id' => $seoGroup->id,
+                'key' => 'seo_description_template',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 2,
+                'display_name' => ['en' => 'SEO Description Template', 'fr' => 'Modèle de description SEO'],
+                'description' => ['en' => 'Template for SEO meta descriptions. Use {description}.', 'fr' => 'Modèle pour les méta-descriptions SEO. Utilisez {description}.'],
+            ],
+            [
+                'setting_group_id' => $seoGroup->id,
+                'key' => 'seo_keywords',
+                'type' => SettingType::TEXTAREA,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 3,
+                'display_name' => ['en' => 'SEO Keywords', 'fr' => 'Mots-clés SEO'],
+                'description' => ['en' => 'Default keywords for your site, separated by commas.', 'fr' => 'Mots-clés par défaut pour votre site, séparés par des virgules.'],
+            ],
+            [
+                'setting_group_id' => $seoGroup->id,
+                'key' => 'seo_use_sitemap',
+                'type' => SettingType::CHECKBOX,
+                'is_public' => true,
+                'is_required' => false,
+                'order' => 4,
+                'display_name' => ['en' => 'Use Sitemap', 'fr' => 'Utiliser le sitemap'],
+                'description' => ['en' => 'Whether to generate and use a sitemap.', 'fr' => 'Indique s\'il faut générer et utiliser un sitemap.'],
+                'value' => '1',
             ],
         ];
 

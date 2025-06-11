@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Livewire component for displaying basic analytics in the admin dashboard.
  */
-#[Layout('components.admin-layout')]
+#[Layout('components.layouts.admin')]
 class AnalyticsDashboard extends Component
 {
     public int $totalPageViews = 0;
@@ -33,6 +33,7 @@ class AnalyticsDashboard extends Component
     public array $topPlatforms = [];
     public array $pageViewsOverTimeData = [];
 
+    public string $range = 'last_30_days';
 
     /**
      * Mount the component and load initial analytics data.
@@ -97,8 +98,7 @@ class AnalyticsDashboard extends Component
                     $host = (string)$item->referrer;
                 } else {
                      // If it's not a clear host, and not null/empty, keep it, otherwise skip or use 'unknown'
-                    $host = !is_null($item->referrer) && $item->referrer !== '' ? trim((string)$item->referrer) : 'unknown';
-                    if ($host === 'unknown' && $item->views === 0) continue; // Skip if unknown and no views
+                    $host = trim((string)$item->referrer);
                 }
             }
              // Ensure host is not excessively long if it's a full path fallback

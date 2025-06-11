@@ -2,9 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Livewire\Livewire\Auth\EmailVerification;
+use App\Livewire\Auth\EmailVerification;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -12,16 +13,16 @@ use Tests\TestCase;
 
 class EmailVerificationTest extends TestCase
 {
+    use RefreshDatabase;
+
     /** @test */
     public function email_verification_screen_can_be_rendered()
     {
-        $user = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
+        $user = User::factory()->unverified()->create();
 
-        $response = $this->actingAs($user)->get('/email/verify');
+        $response = $this->actingAs($user)->get(route('verification.notice'));
 
-        $response->assertStatus(200);
+        $response->assertOk();
     }
 
     /** @test */
@@ -29,9 +30,7 @@ class EmailVerificationTest extends TestCase
     {
         Event::fake();
 
-        $user = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
+        $user = User::factory()->unverified()->create();
 
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
@@ -42,16 +41,15 @@ class EmailVerificationTest extends TestCase
         $response = $this->actingAs($user)->get($verificationUrl);
 
         Event::assertDispatched(Verified::class);
+
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
-        $response->assertRedirect('/dashboard?verified=1');
+        $response->assertRedirect(route('admin.dashboard', ['verified' => 1]));
     }
 
     /** @test */
     public function email_is_not_verified_with_invalid_hash()
     {
-        $user = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
+        $user = User::factory()->unverified()->create();
 
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
@@ -67,24 +65,21 @@ class EmailVerificationTest extends TestCase
     /** @test */
     public function user_can_resend_verification_email()
     {
-        $user = User::factory()->create([
-            'email_verified_at' => null,
-        ]);
+        $user = User::factory()->unverified()->create();
+        $this->actingAs($user);
 
-        Livewire::actingAs($user)
-            ->test(EmailVerification::class)
+        Livewire::test(EmailVerification::class)
             ->call('sendVerificationEmail')
             ->assertSet('verificationLinkSent', true);
     }
 
     /** @test */
-    public function verified_users_are_redirected_from_verification_page()
+    public function verified_users_are_redirected()
     {
         $user = User::factory()->create();
 
-        Livewire::actingAs($user)
-            ->test(\App\Livewire\Livewire\Auth\EmailVerification::class)
-            ->call('sendVerificationEmail')
-            ->assertRedirect('/dashboard');
+        $this->actingAs($user)
+            ->get(route('verification.notice'))
+            ->assertRedirect(route('admin.dashboard'));
     }
 }

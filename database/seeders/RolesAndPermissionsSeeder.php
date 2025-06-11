@@ -67,6 +67,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'description' => 'Can delete users',
         ]);
 
+        $assignRolesPermission = Permission::create([
+            'name' => 'Assign Roles',
+            'slug' => 'assign-roles',
+            'description' => 'Can assign roles to users',
+        ]);
+
         // Role management permissions
         $viewRolesPermission = Permission::create([
             'name' => 'View Roles',
@@ -92,29 +98,131 @@ class RolesAndPermissionsSeeder extends Seeder
             'description' => 'Can delete roles',
         ]);
 
-        // Content management permissions
-        $viewContentPermission = Permission::create([
-            'name' => 'View Content',
-            'slug' => 'view-content',
-            'description' => 'Can view content',
+        // Taxonomy management permissions
+        $viewTaxonomiesPermission = Permission::create([
+            'name' => 'View Taxonomies',
+            'slug' => 'view-taxonomies',
+            'description' => 'Can view taxonomy listings',
         ]);
 
-        $createContentPermission = Permission::create([
-            'name' => 'Create Content',
-            'slug' => 'create-content',
-            'description' => 'Can create new content',
+        $createTaxonomiesPermission = Permission::create([
+            'name' => 'Create Taxonomies',
+            'slug' => 'create-taxonomies',
+            'description' => 'Can create new taxonomies',
         ]);
 
-        $editContentPermission = Permission::create([
-            'name' => 'Edit Content',
-            'slug' => 'edit-content',
-            'description' => 'Can edit existing content',
+        $editTaxonomiesPermission = Permission::create([
+            'name' => 'Edit Taxonomies',
+            'slug' => 'edit-taxonomies',
+            'description' => 'Can edit existing taxonomies',
         ]);
 
-        $deleteContentPermission = Permission::create([
-            'name' => 'Delete Content',
-            'slug' => 'delete-content',
-            'description' => 'Can delete content',
+        $deleteTaxonomiesPermission = Permission::create([
+            'name' => 'Delete Taxonomies',
+            'slug' => 'delete-taxonomies',
+            'description' => 'Can delete taxonomies',
+        ]);
+
+        // Term management permissions
+        $viewTermsPermission = Permission::create([
+            'name' => 'View Terms',
+            'slug' => 'view-terms',
+            'description' => 'Can view term listings',
+        ]);
+
+        $createTermsPermission = Permission::create([
+            'name' => 'Create Terms',
+            'slug' => 'create-terms',
+            'description' => 'Can create new terms',
+        ]);
+
+        $editTermsPermission = Permission::create([
+            'name' => 'Edit Terms',
+            'slug' => 'edit-terms',
+            'description' => 'Can edit existing terms',
+        ]);
+
+        $deleteTermsPermission = Permission::create([
+            'name' => 'Delete Terms',
+            'slug' => 'delete-terms',
+            'description' => 'Can delete terms',
+        ]);
+
+        // Attachment management permissions
+        $viewAttachmentsPermission = Permission::create([
+            'name' => 'View Attachments',
+            'slug' => 'view-attachments',
+            'description' => 'Can view attachments',
+        ]);
+
+        $deleteAttachmentsPermission = Permission::create([
+            'name' => 'Delete Attachments',
+            'slug' => 'delete-attachments',
+            'description' => 'Can delete attachments',
+        ]);
+
+        // Activity Log permissions
+        $viewActivityLogsPermission = Permission::create([
+            'name' => 'View Activity Logs',
+            'slug' => 'view-activity-logs',
+            'description' => 'Can view activity logs',
+        ]);
+
+        $deleteActivityLogsPermission = Permission::create([
+            'name' => 'Delete Activity Logs',
+            'slug' => 'delete-activity-logs',
+            'description' => 'Can delete activity logs',
+        ]);
+
+        // Notification management permissions
+        $viewNotificationsPermission = Permission::create([
+            'name' => 'View Notifications',
+            'slug' => 'view-notifications',
+            'description' => 'Can view notifications',
+        ]);
+
+        $createNotificationsPermission = Permission::create([
+            'name' => 'Create Notifications',
+            'slug' => 'create-notifications',
+            'description' => 'Can create notifications',
+        ]);
+
+        $deleteNotificationsPermission = Permission::create([
+            'name' => 'Delete Notifications',
+            'slug' => 'delete-notifications',
+            'description' => 'Can delete notifications',
+        ]);
+
+        // Legal Page management permissions
+        $viewLegalPagesPermission = Permission::create([
+            'name' => 'View Legal Pages',
+            'slug' => 'view-legal-pages',
+            'description' => 'Can view legal pages',
+        ]);
+
+        $createLegalPagesPermission = Permission::create([
+            'name' => 'Create Legal Pages',
+            'slug' => 'create-legal-pages',
+            'description' => 'Can create legal pages',
+        ]);
+
+        $editLegalPagesPermission = Permission::create([
+            'name' => 'Edit Legal Pages',
+            'slug' => 'edit-legal-pages',
+            'description' => 'Can edit legal pages',
+        ]);
+
+        $deleteLegalPagesPermission = Permission::create([
+            'name' => 'Delete Legal Pages',
+            'slug' => 'delete-legal-pages',
+            'description' => 'Can delete legal pages',
+        ]);
+
+        // Dashboard permissions
+        $viewDashboardPermission = Permission::create([
+            'name' => 'View Dashboard',
+            'slug' => 'view-dashboard',
+            'description' => 'Can view the admin dashboard',
         ]);
 
         // Settings permissions
@@ -137,18 +245,27 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Editor role gets content management permissions and view permissions
         $editorRole->permissions()->attach([
+            $viewDashboardPermission->id,
             $viewUsersPermission->id,
             $viewRolesPermission->id,
-            $viewContentPermission->id,
-            $createContentPermission->id,
-            $editContentPermission->id,
-            $deleteContentPermission->id,
+            $viewTaxonomiesPermission->id,
+            $createTaxonomiesPermission->id,
+            $editTaxonomiesPermission->id,
+            $deleteTaxonomiesPermission->id,
+            $viewTermsPermission->id,
+            $createTermsPermission->id,
+            $editTermsPermission->id,
+            $deleteTermsPermission->id,
+            $viewLegalPagesPermission->id,
+            $createLegalPagesPermission->id,
+            $editLegalPagesPermission->id,
+            $deleteLegalPagesPermission->id,
             $viewSettingsPermission->id,
         ]);
 
         // User role gets basic view permissions
         $userRole->permissions()->attach([
-            $viewContentPermission->id,
+            // Basic permissions for a standard user
         ]);
 
         // Assign admin role to user ID 1 if it exists

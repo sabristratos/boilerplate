@@ -7,6 +7,7 @@ enum SettingType: string
     case TEXT = 'text';
     case TEXTAREA = 'textarea';
     case SELECT = 'select';
+    case MULTISELECT = 'multiselect';
     case CHECKBOX = 'checkbox';
     case RADIO = 'radio';
     case COLOR = 'color';
@@ -45,6 +46,7 @@ enum SettingType: string
             self::TEXT => 'Text',
             self::TEXTAREA => 'Text Area',
             self::SELECT => 'Select',
+            self::MULTISELECT => 'Multi-Select',
             self::CHECKBOX => 'Checkbox',
             self::RADIO => 'Radio',
             self::COLOR => 'Color',

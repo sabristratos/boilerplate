@@ -12,7 +12,7 @@ This section covers Livewire components specifically used within the admin panel
 
 This component is responsible for displaying, filtering, and managing activity logs within the admin panel. It provides a paginated view of logs with options for searching, sorting, and detailed inspection of individual log entries.
 
-**Layout:** `components.admin-layout`
+**Layout:** `layouts.admin`
 
 **Traits Used:**
 
@@ -61,7 +61,7 @@ This component is typically rendered via a route definition (as seen in `routes/
 
 This component provides data for the analytics dashboard within the admin panel. It aggregates and displays various metrics derived from the `PageView` model.
 
-**Layout:** `components.admin-layout`
+**Layout:** `layouts.admin`
 
 **Key Public Properties (Data Points):**
 
@@ -96,7 +96,7 @@ The data is loaded once when the component mounts. The `loadAnalyticsData()` met
 
 This component provides a comprehensive interface for managing file attachments within the admin panel. It allows users to upload new files, view existing attachments, replace files, and delete them. It integrates with system settings for validation and uses an `AttachmentService` for file operations and an `ActivityLogger` for tracking changes.
 
-**Layout:** `components.admin-layout`
+**Layout:** `layouts.admin`
 
 **Traits Used:**
 
@@ -145,7 +145,7 @@ This component is rendered via the `/admin/attachments` route. The `resources/vi
 
 This component manages roles and their associated permissions within the admin panel. It provides a complete CRUD (Create, Read, Update, Delete) interface for roles, including assigning permissions, pagination, and search functionality.
 
-**Layout:** `components.admin-layout`
+**Layout:** `layouts.admin`
 
 **Traits Used:**
 
@@ -206,7 +206,7 @@ This component is rendered via the `/admin/roles` route. The `resources/views/li
 
 This component provides the interface for managing application settings in the admin panel. It allows administrators to view and update settings, which are typically grouped for easier navigation (e.g., in a tabbed layout).
 
-**Layout:** `components.admin-layout`
+**Layout:** `layouts.admin`
 
 **Key Public Properties:**
 
@@ -247,4 +247,61 @@ This component is rendered via the `/admin/settings` route. The `resources/views
 *   Within each tab, iterate over the settings belonging to that group.
 *   For each setting, display an appropriate form input (e.g., text input, textarea, checkbox, select) bound to the corresponding entry in the `$values` array (e.g., `wire:model="values.site_name"`).
 *   Display validation errors associated with each input.
-*   Provide a save button that triggers the `save()` method. 
+*   Provide a save button that triggers the `save()` method.
+
+### `App\Livewire\Admin\TaxonomyManagement`
+
+This component manages taxonomies within the admin panel.
+
+**Layout:** `layouts.admin`
+
+**Key Public Properties:**
+
+*   `taxonomy_id` (int): The ID of the taxonomy currently being edited or confirmed for deletion.
+*   `name` (string): The name of the taxonomy.
+*   `slug` (string): The URL-friendly slug for the taxonomy. Automatically generated from `name` during creation or if the name changes during an edit.
+*   `description` (string): An optional description for the taxonomy.
+*   `selectedPermissions` (array): An array of permission IDs selected to be associated with the taxonomy.
+*   `isCreating` (bool): True if the component is in "create new taxonomy" mode.
+*   `isEditing` (bool): True if the component is in "edit existing taxonomy" mode.
+*   `confirmingDelete` (bool): True if the component is in "confirm taxonomy deletion" mode.
+*   `showModal` (bool): Controls the visibility of the modal used for creating, editing, or confirming deletion of taxonomies.
+*   `search` (string): Search term applied to taxonomy name, slug, or description.
+*   `perPage` (int): Number of taxonomies to display per page (default: `10`).
+
+**Validation Rules (`rules()` & `messages()`):**
+
+*   `name`: Required, string, max 255.
+*   `slug`: Required, string, max 255. Dynamically ensures uniqueness (unique on create, unique ignoring self on edit).
+*   `description`: Nullable, string.
+*   `selectedPermissions`: Must be an array.
+*   Custom messages are provided for `name.required`, `slug.required`, and `slug.unique`.
+
+**Key Methods:**
+
+*   `updatedName(string $value)`: Automatically generates `slug` from `name` when `isCreating` is true, or when `isEditing` and the name has actually changed.
+*   `create()`: Resets form properties and validation, sets `isCreating` to true, and shows the modal.
+*   `store()`: Validates the form data, creates a new `Taxonomy`, attaches `selectedPermissions`, logs the creation event with `ActivityLogger`, closes the modal, and displays a success toast using `Flux::toast`.
+*   `edit(Taxonomy $taxonomy)`: Loads the given `Taxonomy`'s data (including its permission IDs) into the form properties, sets `isEditing` to true, and shows the modal.
+*   `update()`: Validates form data, updates the existing `Taxonomy`, syncs its `selectedPermissions`, logs the update event (including old and new values), closes the modal, and shows a success toast.
+*   `confirmDelete(Taxonomy $taxonomy)`: Sets `taxonomy_id` and `name` for the taxonomy to be deleted, sets `confirmingDelete` to true, and shows the modal for confirmation.
+*   `delete()`: If a `taxonomy_id` is set, it finds the `Taxonomy`, logs its deletion (including associated permission IDs and user count), detaches all associated permissions and users, deletes the taxonomy record, closes the modal, and shows a success toast.
+*   `closeModal()`: Hides the modal, resets all form and state properties (`isCreating`, `isEditing`, `confirmingDelete`), and clears validation errors.
+*   `render()`: Fetches a paginated list of `Taxonomy` models. 
+    *   Applies search to `name`, `slug`, and `description` fields.
+    *   Includes counts of associated `users` and `permissions` for each taxonomy (`withCount('users', 'permissions')`).
+    *   Orders taxonomies by latest.
+    *   Fetches all `Permission` models (for populating the permissions checklist in the form).
+    *   Passes `taxonomies` and `permissions` to the `livewire.admin.taxonomy-management` Blade view.
+
+**Dependencies:**
+
+*   `App\Models\Taxonomy`, `App\Models\Permission`: Eloquent models for data interaction.
+*   `App\Facades\ActivityLogger`: For logging CRUD actions.
+*   `Flux\Flux`: For displaying toast notifications.
+*   `Illuminate\Support\Str`: For slug generation.
+*   `Illuminate\Support\Facades\Log`: For error logging in catch blocks.
+
+**Usage:**
+
+This component is rendered via the `/admin/taxonomies` route. The `resources/views/livewire/admin/taxonomy-management.blade.php` view contains the UI for listing taxonomies, the search input, action buttons (create, edit, delete), and the modal form for taxonomy creation/editing and deletion confirmation. The form would include inputs for taxonomy details and a checklist for selecting permissions. 

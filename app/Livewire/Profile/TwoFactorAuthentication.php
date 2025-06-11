@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.admin-layout')]
+#[Layout('components.layouts.admin')]
 class TwoFactorAuthentication extends Component
 {
     /**

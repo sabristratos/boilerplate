@@ -55,23 +55,31 @@
             </flux:select>
         </div>
 
-        <div class="flex justify-end mt-4">
+        <div class="flex justify-end mt-4 gap-2">
             <flux:button
                 variant="filled"
                 wire:click="resetFilters"
             >
                 {{ __('Reset Filters') }}
             </flux:button>
+            @can('delete-activity-logs')
+            <flux:button
+                variant="danger"
+                wire:click="confirmClearLogs"
+            >
+                {{ __('Clear Logs') }}
+            </flux:button>
+            @endcan
         </div>
     </div>
 
     <!-- Activity Logs Table -->
     <div>
         @if($logs->isEmpty())
-            <x-flux.empty-state
-                icon="document-text"
-                heading="{{ __('No activity logs found') }}"
-                description="{{ __('No activity logs match your search criteria.') }}"
+            <x-empty-state
+                icon="clipboard-document-list"
+                heading="{{ __('No activity found') }}"
+                description="{{ __('Activity logs will appear here as actions are performed.') }}"
             />
         @else
             <flux:table :paginate="$logs">
@@ -166,9 +174,25 @@
         @endif
     </div>
 
+    <!-- Clear Logs Confirmation Modal -->
+    <flux:modal title="{{ __('Confirm Clear Logs') }}" wire:model.self="showClearLogsModal">
+        <div class="space-y-6">
+            <p>{{ __('Are you sure you want to clear all activity logs? This action cannot be undone.') }}</p>
+
+            <div class="flex justify-end gap-2">
+                <flux:button variant="ghost" wire:click="cancelClearLogs">
+                    {{ __('Cancel') }}
+                </flux:button>
+                <flux:button variant="danger" wire:click="clearLogs">
+                    {{ __('Clear Logs') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
     <!-- Log Details Modal -->
-    @if($selectedLog)
-        <flux:modal title="{{ __('Activity Log Details') }}" open wire:click="closeDetails">
+    <flux:modal title="{{ __('Activity Log Details') }}" variant="flyout" wire:model.self="showDetailsModal">
+        @if($selectedLog)
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -268,6 +292,6 @@
                     {{ __('Close') }}
                 </flux:button>
             </x-slot:footer>
-        </flux:modal>
-    @endif
+        @endif
+    </flux:modal>
 </div>
