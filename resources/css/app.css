@@ -6,70 +6,48 @@
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../**/*.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: Inter, sans-serif;
+    --font-sans: Outfit, sans-serif;
 
-    --color-zinc-50: var(--color-gray-50);
-    --color-zinc-100: var(--color-gray-100);
-    --color-zinc-200: var(--color-gray-200);
-    --color-zinc-300: var(--color-gray-300);
-    --color-zinc-400: var(--color-gray-400);
-    --color-zinc-500: var(--color-gray-500);
-    --color-zinc-600: var(--color-gray-600);
-    --color-zinc-700: var(--color-gray-700);
-    --color-zinc-800: var(--color-gray-800);
-    --color-zinc-900: var(--color-gray-900);
-    --color-zinc-950: var(--color-gray-950);
+    --color-accent-50: #fff8ed;
+    --color-accent-100: #fff0d4;
+    --color-accent-200: #ffdda9;
+    --color-accent-300: #ffc472;
+    --color-accent-400: #fe9f39;
+    --color-accent-500: #fc7d09;
+    --color-accent-600: #ed6609;
+    --color-accent-700: #c54d09;
+    --color-accent-800: #9c3c10;
+    --color-accent-900: #7d3311;
+    --color-accent-950: #441806;
+
+    --color-zinc-50: var(--color-neutral-50);
+    --color-zinc-100: var(--color-neutral-100);
+    --color-zinc-200: var(--color-neutral-200);
+    --color-zinc-300: var(--color-neutral-300);
+    --color-zinc-400: var(--color-neutral-400);
+    --color-zinc-500: var(--color-neutral-500);
+    --color-zinc-600: var(--color-neutral-600);
+    --color-zinc-700: var(--color-neutral-700);
+    --color-zinc-800: var(--color-neutral-800);
+    --color-zinc-900: var(--color-neutral-900);
+    --color-zinc-950: var(--color-neutral-950);
 }
 
 @theme {
-    --color-accent: var(--color-rose-500);
-    --color-accent-content: var(--color-rose-500);
+    --color-accent: var(--color-accent-500);
+    --color-accent-content: var(--color-accent-500);
     --color-accent-foreground: var(--color-white);
 }
 @layer theme {
     .dark {
-        --color-accent: var(--color-rose-500);
-        --color-accent-content: var(--color-rose-400);
+        --color-accent: var(--color-accent-500);
+        --color-accent-content: var(--color-accent-400);
         --color-accent-foreground: var(--color-white);
     }
 }
 
-/* --- Button: Fill From Center Effect --- */
-.btn-fill-effect {
-    /* Ensure stacking context and overflow for pseudo-element */
-    position: relative;
-    overflow: hidden;
-    /* z-index: 1; */ /* Base z-index, content will be higher */
-    /* The transition for color is now handled by Tailwind's hover states on the button's text color directly */
-}
-
-.btn-fill-effect::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background-color: var(--btn-fill-color, #059669); /* Default to emerald-600 if var not set */
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.4s ease-in-out, height 0.4s ease-in-out;
-    z-index: 0; /* Ensure fill is behind the text (span with z-10) */
-}
-
-.btn-fill-effect:hover::before,
-.btn-fill-effect:focus::before /* Optional: also trigger on focus */
-{
-    width: 225%; /* Adjust size to ensure it covers the button */
-    height: 225%;
-}
-
-/* Ensure button text stays on top and is not affected by the fill's color directly if it was transparent */
-.btn-fill-effect > span {
-    position: relative;
-    z-index: 1;
-}
