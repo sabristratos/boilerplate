@@ -2,7 +2,7 @@
     <div class="flex justify-between items-center mb-4">
         <flux:heading size="xl">{{ __('Legal Pages') }}</flux:heading>
         @can('create-legal-pages')
-        <flux:button variant="primary" icon="plus" :href="route('admin.legal.create')">{{ __('Create Page') }}</flux:button>
+        <flux:button variant="primary" icon="plus" :href="route('admin.legal-pages.create')">{{ __('Create Page') }}</flux:button>
         @endcan
     </div>
 
@@ -14,7 +14,7 @@
             heading="{{ __('No pages yet') }}"
             description="{{ __('Get started by creating your first legal page.') }}">
             @can('create-legal-pages')
-            <flux:button variant="primary" icon="plus" :href="route('admin.legal.create')">{{ __('Create Page') }}</flux:button>
+            <flux:button variant="primary" icon="plus" :href="route('admin.legal-pages.create')">{{ __('Create Page') }}</flux:button>
             @endcan
         </x-empty-state>
     @else
@@ -70,7 +70,7 @@
                                     <flux:button icon="ellipsis-vertical" variant="ghost" tooltip="{{ __('Actions') }}" />
                                     <flux:menu>
                                         @can('edit-legal-pages')
-                                        <flux:menu.item :href="route('admin.legal.edit', ['legalPage' => $page, 'tab' => $this->localeFilter ?? $page->first_available_locale])" icon="pencil">{{ __('Edit') }}</flux:menu.item>
+                                        <flux:menu.item :href="route('admin.legal-pages.edit', ['legalPage' => $page, 'tab' => $this->localeFilter ?? $page->first_available_locale])" icon="pencil">{{ __('Edit') }}</flux:menu.item>
                                         @endcan
                                         @can('delete-legal-pages')
                                         <flux:menu.item wire:click="$dispatch('confirm-delete-page', { legalPage: {{ $page->id }} })" icon="trash">{{ __('Delete') }}</flux:menu.item>

@@ -10,15 +10,15 @@ Route::get('/', function () {
     return view('home');
 });
 
-// Dynamic CSS route
-Route::get('/css/dynamic.css', [\App\Http\Controllers\DynamicCssController::class, 'index'])
-    ->name('dynamic.css');
 
 // Dashboard route (protected)
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureTwoFactorChallengeIsComplete::class])->group(function () {
 
     // Stop impersonation route
     Route::get('/users/impersonate/stop', [ImpersonationController::class, 'stop'])->name('admin.users.impersonate.stop');
+
+    // Notification Preferences
+    Route::get('/user/notification-preferences', \App\Livewire\Profile\NotificationPreferences::class)->name('profile.notification-preferences');
 
     // Two-factor authentication setup
     Route::get('/user/two-factor-authentication', TwoFactorAuthentication::class)->name('two-factor.setup');

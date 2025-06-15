@@ -9,7 +9,6 @@ use App\Models\Term;
 use App\Services\TermService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -21,95 +20,139 @@ class ManageTerm extends Component
     public Taxonomy $taxonomy;
     public ?Term $term = null;
 
-    public string $name = '';
-    public string $description = '';
-    public ?int $parent_id = null;
+    public array $name = [];
+    public array $description = [];
+    public ?int $parentId = null;
+    public array $locales;
+    public string $currentLocale;
 
     public function mount(Taxonomy $taxonomy, ?Term $term): void
     {
         $this->taxonomy = $taxonomy;
         $this->term = $term;
+        $this->locales = config('app.available_locales', ['en' => 'English']);
+        $this->currentLocale = array_key_first($this->locales);
 
         if ($this->term?->exists) {
-            Gate::authorize('edit-terms');
-            $this->name = $this->term->name;
-            $this->description = $this->term->description ?? '';
-            $this->parent_id = $this->term->parent_id;
+            $this->authorize('update', $this->term);
+            foreach ($this->locales as $localeCode => $localeName) {
+                $this->name[$localeCode] = $this->term->getTranslation('name', $localeCode);
+                $this->description[$localeCode] = $this->term->getTranslation('description', $localeCode);
+            }
+            $this->parentId = $this->term->parent_id;
         } else {
-            Gate::authorize('create-terms');
+            $this->authorize('create', [Term::class, $taxonomy]);
+            foreach ($this->locales as $localeCode => $localeName) {
+                $this->name[$localeCode] = '';
+                $this->description[$localeCode] = '';
+            }
         }
     }
 
     protected function rules(): array
     {
-        return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('terms', 'name')
-                    ->where('taxonomy_id', $this->taxonomy->id)
-                    ->ignore($this->term?->id),
+        $rules = [
+            'parentId' => [
+                'nullable',
+                Rule::exists('terms', 'id')->where('taxonomy_id', $this->taxonomy->id),
             ],
-            'description' => 'nullable|string|max:255',
-            'parent_id' => 'nullable|exists:terms,id',
         ];
+
+        $defaultLocale = config('app.fallback_locale');
+
+        foreach ($this->locales as $localeCode => $localeName) {
+            $rules["name.{$localeCode}"] = $localeCode === $defaultLocale
+                ? 'required|string|max:255'
+                : 'nullable|string|max:255';
+
+            $rules["description.{$localeCode}"] = 'nullable|string|max:255';
+        }
+
+        return $rules;
+    }
+
+    protected function messages(): array
+    {
+        $messages = [];
+
+        $defaultLocale = config('app.fallback_locale');
+
+        foreach ($this->locales as $localeCode => $localeName) {
+            if ($localeCode === $defaultLocale) {
+                $messages["name.{$localeCode}.required"] = __('The name field is required for :locale.', ['locale' => $localeName]);
+            }
+
+            $messages["name.{$localeCode}.max"] = __('The name field must not exceed 255 characters for :locale.', ['locale' => $localeName]);
+            $messages["description.{$localeCode}.max"] = __('The description field must not exceed 255 characters for :locale.', ['locale' => $localeName]);
+        }
+
+        $messages['parentId.exists'] = __('The selected parent term is invalid.');
+
+        return $messages;
     }
 
     public function save(TermService $termService): void
     {
-        $this->validate();
-
-        $data = [
-            'name' => $this->name,
-            'description' => $this->description,
-            'taxonomy_id' => $this->taxonomy->id,
-            'parent_id' => $this->parent_id,
-        ];
+        $this->resetErrorBag();
 
         try {
-            if ($this->term?->exists) {
-                Gate::authorize('edit-terms');
-                $termService->updateTerm($this->term, $data);
-                Flux::toast(
-                    text: __('Term updated successfully.'),
-                    heading: __('Success'),
-                    variant: 'success'
-                );
-            } else {
-                Gate::authorize('create-terms');
-                $term = $termService->createTerm($data);
-                Flux::toast(
-                    text: __('Term created successfully.'),
-                    heading: __('Success'),
-                    variant: 'success'
-                );
-                $this->redirect(route('admin.taxonomies.terms.edit', [
-                    'taxonomy' => $this->taxonomy,
-                    'term' => $term,
-                ]), navigate: true);
+            $validated = $this->validate();
 
-                return;
+            $data = [
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'parent_id' => $validated['parentId'],
+                'taxonomy_id' => $this->taxonomy->id,
+            ];
+
+            if ($this->term?->exists) {
+                $termService->update($this->term, $data);
+                Flux::toast(
+                    heading: __('Success'),
+                    text: __('Term updated successfully.'),
+                    variant: 'success'
+                );
+
+                $this->dispatch('term-saved');
+            } else {
+                $term = $termService->create($data);
+                Flux::toast(
+                    heading: __('Success'),
+                    text: __('Term created successfully.'),
+                    variant: 'success'
+                );
+
+                $this->redirect(
+                    route('admin.taxonomies.terms.edit', ['taxonomy' => $this->taxonomy->id, 'term' => $term->id]),
+                    navigate: true
+                );
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to save term: ' . $e->getMessage());
+        } catch (\Illuminate\Validation\ValidationException $e) {
             Flux::toast(
-                text: __('Failed to save term. Please try again.'),
-                heading: __('Error'),
+                heading: __('Validation Error'),
+                text: __('Please check the form for errors.'),
                 variant: 'danger'
             );
-
-            return;
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Failed to save term', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            Flux::toast(
+                heading: __('Error'),
+                text: __('Failed to save term. Please try again.'),
+                variant: 'danger'
+            );
         }
-
-        $this->dispatch('term-saved');
-        $this->redirect(route('admin.taxonomies.terms.index', $this->taxonomy), navigate: true);
     }
 
     public function render(): View
     {
         return view('livewire.admin.terms.manage-term', [
-            'parentTerms' => $this->taxonomy->terms()->where('id', '!=', $this->term?->id)->get(),
+            'parentTerms' => $this->taxonomy->hierarchical
+                ? $this->taxonomy->terms()->where('id', '!=', $this->term?->id)->get()
+                : collect(),
         ]);
     }
-} 
+}

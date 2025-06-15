@@ -78,7 +78,7 @@ class PageView extends Model
     /**
      * Get the user associated with the page view, if any.
      *
-     * @return BelongsTo<User, PageView>
+     * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {

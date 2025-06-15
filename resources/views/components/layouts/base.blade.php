@@ -40,9 +40,6 @@
     <!-- Scripts and Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Dynamic CSS based on settings with cache busting -->
-    <link rel="stylesheet" href="{{ route('dynamic.css') }}?v={{ time() }}">
-
     <!-- Flux Appearance -->
     @php
         $enableDarkMode = setting('enable_dark_mode', true);

@@ -34,6 +34,7 @@ class Setting extends Model
         'value',
         'type',
         'options',
+        'validation_rules',
         'is_public',
         'is_required',
         'order',

@@ -45,15 +45,15 @@ class EditLegalPage extends Component
         }
 
         if ($this->legalPage->exists) {
-            Gate::authorize('edit-legal-pages');
+            $this->authorize('update', $this->legalPage);
             foreach ($this->locales as $localeCode => $localeName) {
-                $this->title[$localeCode] = $this->legalPage->getTranslation('title', $localeCode);
-                $this->slug[$localeCode] = $this->legalPage->getTranslation('slug', $localeCode);
-                $this->content[$localeCode] = $this->legalPage->getTranslation('content', $localeCode);
+                $this->title[$localeCode] = $this->legalPage->getTranslation('title', $localeCode, false);
+                $this->slug[$localeCode] = $this->legalPage->getTranslation('slug', $localeCode, false);
+                $this->content[$localeCode] = $this->legalPage->getTranslation('content', $localeCode, false);
             }
             $this->is_published = $this->legalPage->is_published;
         } else {
-            Gate::authorize('create-legal-pages');
+            $this->authorize('create', LegalPage::class);
             foreach ($this->locales as $localeCode => $localeName) {
                 $this->title[$localeCode] = '';
                 $this->slug[$localeCode] = '';
@@ -72,16 +72,26 @@ class EditLegalPage extends Component
 
     public function save(LegalPageService $legalPageService): void
     {
-        Gate::authorize($this->legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages');
+        $this->authorize($this->legalPage->exists ? 'update' : 'create', $this->legalPage->exists ? $this->legalPage : LegalPage::class);
+        
         $fallbackLocale = config('app.fallback_locale');
-        $validatedData = $this->validate([
+        $validationRules = [
             "title.{$fallbackLocale}" => 'required|string|max:255',
             "slug.{$fallbackLocale}" => 'required|string|max:255',
             'title.*' => 'nullable|string|max:255',
             'slug.*' => 'nullable|string|max:255',
             'content.*' => 'nullable|string',
             'is_published' => 'boolean',
-        ]);
+        ];
+
+        $validationMessages = [
+            "title.{$fallbackLocale}.required" => __('The title is required in the default language.'),
+            "slug.{$fallbackLocale}.required" => __('The slug is required in the default language.'),
+            'title.*.max' => __('The title may not be greater than :max characters.'),
+            'slug.*.max' => __('The slug may not be greater than :max characters.'),
+        ];
+
+        $validatedData = $this->validate($validationRules, $validationMessages);
 
         try {
             $legalPageService->save($validatedData, $this->legalPage->id);

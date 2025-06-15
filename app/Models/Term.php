@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * @property-read Taxonomy $taxonomy
@@ -28,6 +29,17 @@ use Illuminate\Support\Carbon;
 class Term extends Model
 {
     use HasFactory;
+    use HasTranslations;
+
+    /**
+     * The attributes that are translatable.
+     *
+     * @var array<int, string>
+     */
+    public array $translatable = [
+        'name',
+        'description',
+    ];
 
     protected $fillable = [
         'taxonomy_id',
@@ -117,13 +129,25 @@ class Term extends Model
      */
     public function descendants(): \Illuminate\Database\Eloquent\Collection
     {
-        $descendants = new \Illuminate\Database\Eloquent\Collection();
-        foreach ($this->children as $child) {
-            $descendants->push($child);
-            if ($child->children()->exists()) { // Optimization: only recurse if children exist
-                $descendants = $descendants->merge($child->descendants());
-            }
-        }
-        return $descendants;
+        return $this->children()->with('descendants')->get();
+    }
+
+    /**
+     * Get the available locales as a string.
+     */
+    public function getAvailableLocalesAsStringAttribute(): string
+    {
+        return collect($this->getTranslatedLocales('name'))
+            ->filter()
+            ->implode(', ');
+    }
+
+    /**
+     * Get the first available locale.
+     */
+    public function getFirstAvailableLocaleAttribute(): ?string
+    {
+        $locales = $this->getTranslatedLocales('name');
+        return array_shift($locales);
     }
 }

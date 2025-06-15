@@ -25,5 +25,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed settings
         $this->call(SettingsSeeder::class);
+
+        // Seed legal pages
+        $this->call(LegalPagesSeeder::class);
     }
 }

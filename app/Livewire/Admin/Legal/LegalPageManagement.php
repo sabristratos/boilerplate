@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Legal;
 
+use App\Livewire\Traits\WithFiltering;
 use App\Models\LegalPage;
 use App\Services\LegalPageService;
 use Flux\Flux;
@@ -17,21 +18,19 @@ use Livewire\Attributes\Url;
 class LegalPageManagement extends Component
 {
     use WithPagination;
-
-    #[Url(keep: true)]
-    public string $search = '';
-    #[Url(keep: true)]
-    public int $perPage = 10;
-    #[Url(keep: true)]
-    public string $sortBy = 'created_at';
-    #[Url(keep: true)]
-    public string $sortDirection = 'desc';
+    use WithFiltering;
 
     #[Url(keep: true)]
     public ?string $localeFilter = null;
 
     public bool $confirmingDelete = false;
     public ?LegalPage $deletingPage = null;
+
+    public function mount(): void
+    {
+        $this->sortBy = 'created_at';
+        $this->sortDirection = 'desc';
+    }
 
     public function hasFilters(): bool
     {
@@ -44,32 +43,21 @@ class LegalPageManagement extends Component
         // This will refresh the component rendering the page list.
     }
 
-    public function sort(string $column): void
-    {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortDirection = 'asc';
-        }
-
-        $this->sortBy = $column;
-        $this->resetPage();
-    }
-
     #[On('confirm-delete-page')]
     public function confirmDelete(LegalPage $legalPage): void
     {
-        Gate::authorize('delete-legal-pages');
+        $this->authorize('delete', $legalPage);
         $this->deletingPage = $legalPage;
         $this->confirmingDelete = true;
     }
 
     public function delete(LegalPageService $legalPageService): void
     {
-        Gate::authorize('delete-legal-pages');
         if (!$this->deletingPage) {
             return;
         }
+
+        $this->authorize('delete', $this->deletingPage);
 
         try {
             $legalPageService->deleteLegalPage($this->deletingPage);
@@ -92,16 +80,6 @@ class LegalPageManagement extends Component
         $this->deletingPage = null;
     }
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedPerPage(): void
-    {
-        $this->resetPage();
-    }
-    
     protected function getSortColumn(): string
     {
         $translatableAttributes = (new LegalPage())->getTranslatableAttributes();

@@ -6,10 +6,10 @@ namespace App\Livewire\Admin\Roles;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\PermissionService;
 use App\Services\RoleService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -19,30 +19,46 @@ class ManageRole extends Component
 {
     public ?Role $role = null;
 
-    public string $name = '';
-    public string $description = '';
+    public array $name = [];
+    public array $description = [];
     public array $selectedPermissions = [];
+    public array $locales;
+    public string $currentLocale;
 
     public function mount(?Role $role): void
     {
         $this->role = $role;
+        $this->locales = config('app.available_locales', ['en' => 'English']);
+        $this->currentLocale = array_key_first($this->locales);
+
         if ($this->role?->exists) {
-            Gate::authorize('edit-roles');
-            $this->name = $this->role->name;
-            $this->description = $this->role->description ?? '';
+            $this->authorize('update', $this->role);
+            foreach ($this->locales as $localeCode => $localeName) {
+                $this->name[$localeCode] = $this->role->getTranslation('name', $localeCode);
+                $this->description[$localeCode] = $this->role->getTranslation('description', $localeCode);
+            }
             $this->selectedPermissions = $this->role->permissions->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         } else {
-            Gate::authorize('create-roles');
+            $this->authorize('create', Role::class);
+            foreach ($this->locales as $localeCode => $localeName) {
+                $this->name[$localeCode] = '';
+                $this->description[$localeCode] = '';
+            }
         }
     }
 
     protected function rules(): array
     {
-        return [
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
+        $rules = [
             'selectedPermissions' => 'array',
         ];
+
+        foreach ($this->locales as $localeCode => $localeName) {
+            $rules["name.{$localeCode}"] = 'required|string|max:255';
+            $rules["description.{$localeCode}"] = 'nullable|string|max:255';
+        }
+
+        return $rules;
     }
 
     public function save(RoleService $roleService): void
@@ -56,42 +72,28 @@ class ManageRole extends Component
 
         try {
             if ($this->role?->exists) {
-                Gate::authorize('edit-roles');
                 $roleService->updateRole($this->role, $data, $this->selectedPermissions);
-                Flux::toast(
-                    text: __('Role updated successfully.'),
-                    heading: __('Success'),
-                    variant: 'success'
-                );
+                Flux::toast(text: __('Role updated successfully.'), variant: 'success');
             } else {
-                Gate::authorize('create-roles');
-                $role = $roleService->createRole($data, $this->selectedPermissions);
-                Flux::toast(
-                    text: __('Role created successfully.'),
-                    heading: __('Success'),
-                    variant: 'success'
-                );
-                $this->redirect(route('admin.roles.edit', $role), navigate: true);
-                return;
+                $roleService->createRole($data, $this->selectedPermissions);
+                Flux::toast(text: __('Role created successfully.'), variant: 'success');
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to save role: ' . $e->getMessage());
-            Flux::toast(
-                text: __('Failed to save role. Please try again.'),
-                heading: __('Error'),
-                variant: 'danger'
-            );
-            return;
-        }
 
-        $this->dispatch('role-saved');
-        $this->redirect(route('admin.roles.index'), navigate: true);
+            $this->redirect(route('admin.roles.index'), navigate: true);
+        } catch (\Exception $e) {
+            Log::error('Failed to save role', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            Flux::toast(text: __('Failed to save role. Please try again.'), variant: 'danger');
+        }
     }
 
-    public function render(): View
+    public function render(PermissionService $permissionService): View
     {
         return view('livewire.admin.roles.manage-role', [
-            'permissions' => Permission::all()->groupBy('group'),
+            'permissions' => $permissionService->all(),
         ]);
     }
 } 

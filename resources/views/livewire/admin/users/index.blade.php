@@ -1,9 +1,13 @@
 <div>
     <div class="flex justify-between items-center mb-4">
         <flux:heading size="xl">{{ __('User Management') }}</flux:heading>
-        @can('create-users')
-        <flux:button variant="primary" icon="plus" :href="route('admin.users.create')">{{ __('Create User') }}</flux:button>
-        @endcan
+        <div class="flex items-center space-x-2">
+            <flux:button :href="route('admin.users.import')" icon="arrow-up-tray">{{ __('Import') }}</flux:button>
+            <flux:button wire:click="export" icon="arrow-down-tray">{{ __('Export') }}</flux:button>
+            @can('create-users')
+                <flux:button variant="primary" icon="plus" :href="route('admin.users.create')">{{ __('Create User') }}</flux:button>
+            @endcan
+        </div>
     </div>
 
     <flux:separator variant="subtle" class="my-8" />
@@ -61,7 +65,7 @@
                                     <flux:avatar src="{{ $user->getAvatarUrl() }}" alt="{{ $user->name }}" />
                                     <div class="ml-4">
                                         <div class="font-medium text-gray-900 dark:text-white">{{ $user->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
                                     </div>
                                 </div>
                             </flux:table.cell>

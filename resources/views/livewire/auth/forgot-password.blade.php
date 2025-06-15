@@ -33,7 +33,6 @@
                             type="email"
                             autocomplete="email"
                             required
-                            :error="$errors->first('email')"
                         />
                     </div>
 

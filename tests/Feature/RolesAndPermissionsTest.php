@@ -1,82 +1,141 @@
 <?php
 
-namespace Tests\Feature;
-
-use App\Models\User;
-use App\Models\Role;
+use App\Livewire\Admin\Roles\ManageRole;
 use App\Models\Permission;
-use Tests\TestCase;
+use App\Models\Role;
+use App\Models\User;
 
-class RolesAndPermissionsTest extends TestCase
-{
-    public function test_user_can_be_assigned_a_role()
-    {
-        // Create a user
-        $user = User::factory()->create();
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
 
-        // Create a role
-        $role = Role::create([
-            'name' => 'Test Role',
-            'slug' => 'test-role',
-            'description' => 'A role for testing',
-        ]);
+/**
+ * @covers \App\Models\User
+ * @covers \App\Models\Role
+ */
+it('can determine if a user has a specific permission', function () {
+    $user = User::factory()->create();
+    $role = Role::factory()->create();
+    $permission = Permission::factory()->create(['slug' => 'edit-articles']);
 
-        // Assign the role to the user
-        $user->roles()->attach($role);
+    $role->permissions()->attach($permission);
+    $user->roles()->attach($role);
 
-        // Check if the user has the role
-        $this->assertTrue($user->hasRole('test-role'));
-    }
+    expect($user->hasPermission('edit-articles'))->toBeTrue();
+    expect($user->hasPermission('delete-articles'))->toBeFalse();
+});
 
-    public function test_role_can_be_assigned_a_permission()
-    {
-        // Create a role
-        $role = Role::create([
-            'name' => 'Test Role',
-            'slug' => 'test-role',
-            'description' => 'A role for testing',
-        ]);
+/**
+ * @covers \App\Models\User
+ * @covers \App\Models\Role
+ */
+it('can determine if a user has any of a given set of permissions', function () {
+    $user = User::factory()->create();
+    $role = Role::factory()->create();
+    $permission1 = Permission::factory()->create(['slug' => 'edit-articles']);
+    $permission2 = Permission::factory()->create(['slug' => 'publish-articles']);
+    $permission3 = Permission::factory()->create(['slug' => 'delete-articles']);
 
-        // Create a permission
-        $permission = Permission::create([
-            'name' => 'Test Permission',
-            'slug' => 'test-permission',
-            'description' => 'A permission for testing',
-        ]);
+    $role->permissions()->attach([$permission1->id, $permission2->id]);
+    $user->roles()->attach($role);
 
-        // Assign the permission to the role
-        $role->permissions()->attach($permission);
+    expect($user->hasAnyPermission(['edit-articles', 'delete-articles']))->toBeTrue();
+    expect($user->hasAnyPermission(['delete-articles', 'unpublish-articles']))->toBeFalse();
+});
 
-        // Check if the role has the permission
-        $this->assertTrue($role->hasPermission('test-permission'));
-    }
+/**
+ * @covers \App\Models\User
+ * @covers \App\Models\Role
+ */
+it('can determine if a user has all of a given set of permissions', function () {
+    $user = User::factory()->create();
+    $role = Role::factory()->create();
+    $permission1 = Permission::factory()->create(['slug' => 'edit-articles']);
+    $permission2 = Permission::factory()->create(['slug' => 'publish-articles']);
+    $permission3 = Permission::factory()->create(['slug' => 'delete-articles']);
 
-    public function test_user_can_have_permission_through_role()
-    {
-        // Create a user
-        $user = User::factory()->create();
+    $role->permissions()->attach([$permission1->id, $permission2->id]);
+    $user->roles()->attach($role);
 
-        // Create a role
-        $role = Role::create([
-            'name' => 'Test Role',
-            'slug' => 'test-role',
-            'description' => 'A role for testing',
-        ]);
+    expect($user->hasAllPermissions(['edit-articles', 'publish-articles']))->toBeTrue();
+    expect($user->hasAllPermissions(['edit-articles', 'delete-articles']))->toBeFalse();
+});
 
-        // Create a permission
-        $permission = Permission::create([
-            'name' => 'Test Permission',
-            'slug' => 'test-permission',
-            'description' => 'A permission for testing',
-        ]);
+/**
+ * @covers \App\Models\Role
+ */
+it('can determine if a role has a specific permission', function () {
+    $role = Role::factory()->create();
+    $permission = Permission::factory()->create(['slug' => 'edit-articles']);
 
-        // Assign the permission to the role
-        $role->permissions()->attach($permission);
+    $role->permissions()->attach($permission);
 
-        // Assign the role to the user
-        $user->roles()->attach($role);
+    expect($role->hasPermission('edit-articles'))->toBeTrue();
+    expect($role->hasPermission('delete-articles'))->toBeFalse();
+});
 
-        // Check if the user has the permission through the role
-        $this->assertTrue($user->hasPermission('test-permission'));
-    }
-}
+/**
+ * @covers \App\Livewire\Admin\Roles\ManageRole
+ * @covers \App\Services\RoleService
+ */
+it('can create a role with permissions', function () {
+    $user = User::factory()->create();
+    $permission1 = Permission::factory()->create();
+    $permission2 = Permission::factory()->create();
+
+    // Give user permission to create roles
+    $user->roles()->create(['name' => 'admin', 'slug' => 'admin'])
+        ->permissions()->create(['name' => 'Create Roles', 'slug' => 'create-roles']);
+
+    actingAs($user);
+
+    \Livewire\Livewire::test(ManageRole::class)
+        ->set('name', 'Test Role')
+        ->set('description', 'A test role.')
+        ->set('selectedPermissions', [(string) $permission1->id, (string) $permission2->id])
+        ->call('save');
+
+    assertDatabaseHas('roles', [
+        'name' => 'Test Role',
+        'description' => 'A test role.',
+    ]);
+
+    $role = Role::where('name', 'Test Role')->first();
+    expect($role->permissions->pluck('id')->all())->toEqualCanonicalizing([$permission1->id, $permission2->id]);
+});
+
+/**
+ * @covers \App\Livewire\Admin\Roles\ManageRole
+ * @covers \App\Services\RoleService
+ */
+it('can update a role with permissions', function () {
+    $user = User::factory()->create();
+    $role = Role::factory()->create();
+    $permission1 = Permission::factory()->create();
+    $permission2 = Permission::factory()->create();
+    $permission3 = Permission::factory()->create();
+
+    $role->permissions()->attach($permission1);
+
+    // Give user permission to edit roles
+    $user->roles()->create(['name' => 'admin', 'slug' => 'admin'])
+        ->permissions()->create(['name' => 'Edit Roles', 'slug' => 'edit-roles']);
+
+    actingAs($user);
+
+    \Livewire\Livewire::test(ManageRole::class, ['role' => $role])
+        ->set('name', 'Updated Role Name')
+        ->set('description', 'Updated description.')
+        ->set('selectedPermissions', [(string) $permission2->id, (string) $permission3->id])
+        ->call('save')
+        ->assertDispatched('role-saved');
+
+    assertDatabaseHas('roles', [
+        'id' => $role->id,
+        'name' => 'Updated Role Name',
+        'description' => 'Updated description.',
+    ]);
+
+    $role->refresh();
+    expect($role->permissions)->toHaveCount(2)
+        ->and($role->permissions->pluck('id')->all())->toEqualCanonicalizing([$permission2->id, $permission3->id]);
+}); 

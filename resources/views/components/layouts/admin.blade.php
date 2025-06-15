@@ -13,14 +13,15 @@
                 @endcan
                 <flux:navlist.group heading="{{ __('Manage') }}" class="mt-4">
                     <flux:navlist.group icon="user" expandable heading="{{ __('Content') }}" class="grid">
-                        @can('view-attachments')
+                        @can('viewAny', \App\Models\Attachment::class)
                         <flux:navlist.item href="{{ route('admin.attachments') }}" :current="request()->routeIs('admin.attachments')">{{ __('Attachments') }}</flux:navlist.item>
                         @endcan
-                        @can('view-taxonomies')
+                        <flux:navlist.item href="{{ route('admin.translations.index') }}" :current="request()->routeIs('admin.translations.index')">{{ __('Translations') }}</flux:navlist.item>
+                        @can('viewAny', \App\Models\Taxonomy::class)
                         <flux:navlist.item href="{{ route('admin.taxonomies.index') }}" :current="request()->routeIs('admin.taxonomies.*')">{{ __('Taxonomies') }}</flux:navlist.item>
                         @endcan
                         @can('view-legal-pages')
-                        <flux:navlist.item href="{{ route('admin.legal.index') }}" :current="request()->routeIs('admin.legal.*')">{{ __('Legal') }}</flux:navlist.item>
+                        <flux:navlist.item href="{{ route('admin.legal-pages.index') }}" :current="request()->routeIs('admin.legal-pages.*')">{{ __('Legal') }}</flux:navlist.item>
                         @endcan
                     </flux:navlist.group>
                     <flux:navlist.group expandable heading="{{ __('User Management') }}" class="grid">
@@ -74,22 +75,22 @@
                         square
                     />
                     <flux:menu>
-                        <flux:menu.item href="{{ route('language.switch', ['locale' => 'en']) }}">
-                            {{ __('English') }}
-                            @if(app()->getLocale() === 'en')
-                                <x-slot:icon>
-                                    <flux:icon icon="check" variant="mini" class="text-green-500" />
-                                </x-slot:icon>
+                        @php
+                            $availableLocales = json_decode(\App\Facades\Settings::get('available_languages', '[]'), true) ?: [];
+                            $allLocales = config('app.available_locales', []);
+                        @endphp
+                        @foreach($availableLocales as $locale)
+                            @if(isset($allLocales[$locale]))
+                                <flux:menu.item href="{{ route('language.switch', ['locale' => $locale]) }}">
+                                    {{ $allLocales[$locale] }}
+                                    @if(app()->getLocale() === $locale)
+                                        <x-slot:icon>
+                                            <flux:icon icon="check" variant="mini" class="text-green-500" />
+                                        </x-slot:icon>
+                                    @endif
+                                </flux:menu.item>
                             @endif
-                        </flux:menu.item>
-                        <flux:menu.item href="{{ route('language.switch', ['locale' => 'fr']) }}">
-                            {{ __('Français') }}
-                            @if(app()->getLocale() === 'fr')
-                                <x-slot:icon>
-                                    <flux:icon icon="check" variant="mini" class="text-green-500" />
-                                </x-slot:icon>
-                            @endif
-                        </flux:menu.item>
+                        @endforeach
                     </flux:menu>
                 </flux:dropdown>
 
@@ -123,6 +124,7 @@
 
                 <flux:menu>
                     <flux:menu.item href="{{ route('admin.profile') }}" icon="user">{{ __('Profile') }}</flux:menu.item>
+                    <flux:menu.item href="{{ route('profile.notification-preferences') }}" icon="bell">{{ __('Notification Preferences') }}</flux:menu.item>
                     @can('view-settings')
                     <flux:menu.item href="{{ route('admin.settings') }}" icon="cog-6-tooth">{{ __('Settings') }}</flux:menu.item>
                     @endcan
@@ -178,6 +180,7 @@
 
                 <flux:menu>
                     <flux:menu.item href="{{ route('admin.profile') }}" icon="user">{{ __('Profile') }}</flux:menu.item>
+                    <flux:menu.item href="{{ route('profile.notification-preferences') }}" icon="bell">{{ __('Notification Preferences') }}</flux:menu.item>
                     @can('view-settings')
                     <flux:menu.item href="#" icon="cog-6-tooth">{{ __('Settings') }}</flux:menu.item>
                     @endcan

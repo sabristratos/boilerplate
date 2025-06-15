@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ImpersonationService;
 use Flux\Flux;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
 class ImpersonationController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Start impersonating a user.
      *
@@ -18,29 +22,13 @@ class ImpersonationController extends Controller
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Exception
      */
-    public function start(User $user): RedirectResponse
+    public function start(User $user, ImpersonationService $impersonationService): RedirectResponse
     {
-        // Ensure user is authorized to impersonate (e.g., is an admin)
-        if (!auth()->user()->hasRole('admin')) {
-            abort(403, 'You are not authorized to perform this action.');
-        }
+        $this->authorize('impersonate', $user);
 
-        // Cannot impersonate another admin
-        if ($user->hasRole('admin')) {
-            abort(403, 'You cannot impersonate another administrator.');
-        }
+        $impersonator = auth()->user();
 
-        // Cannot impersonate self
-        if ($user->id === auth()->id()) {
-            abort(403, 'You cannot impersonate yourself.');
-        }
-
-        session()->put([
-            'impersonator_id' => auth()->id(),
-            'impersonator_name' => auth()->user()->name,
-        ]);
-
-        Auth::login($user);
+        $impersonationService->impersonate($impersonator, $user);
 
         session()->flash('impersonation_success', __('You are now impersonating :name.', ['name' => $user->name]));
 
@@ -50,19 +38,16 @@ class ImpersonationController extends Controller
     /**
      * Stop impersonating a user.
      *
-     * @return void
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function stop(): void
+    public function stop(ImpersonationService $impersonationService): RedirectResponse
     {
-        $impersonatorId = session()->get('impersonator_id');
-
-        if (! $impersonatorId) {
+        if (! $impersonationService->isImpersonating()) {
             abort(403);
         }
 
-        Auth::loginUsingId($impersonatorId);
+        $impersonationService->leave();
 
-        session()->forget('impersonator_id');
-        session()->forget('impersonator_name');
+        return redirect()->route('admin.dashboard');
     }
 } 

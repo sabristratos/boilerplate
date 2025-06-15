@@ -28,8 +28,7 @@ class CheckUserStatus
 
             $message = match ($status) {
                 UserStatus::Inactive => __('Your account is inactive.'),
-                UserStatus::Suspended => __('Your account has been suspended.'),
-                default => __('Your account is not active.'),
+                default => __('Your account has been suspended or is inactive.'),
             };
 
             return redirect('/')->with('error', $message);

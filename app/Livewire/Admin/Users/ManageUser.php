@@ -32,13 +32,13 @@ class ManageUser extends Component
     {
         $this->user = $user;
         if ($this->user?->exists) {
-            Gate::authorize('edit-users');
+            $this->authorize('update', $this->user);
             $this->name = $this->user->name;
             $this->email = $this->user->email;
             $this->status = $this->user->status->value;
             $this->selectedRoles = $this->user->roles->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         } else {
-            Gate::authorize('create-users');
+            $this->authorize('create', User::class);
         }
     }
 
@@ -66,14 +66,14 @@ class ManageUser extends Component
     public function save(UserService $userService): void
     {
         if ($this->user?->exists) {
-            Gate::authorize('edit-users');
+            $this->authorize('update', $this->user);
         } else {
-            Gate::authorize('create-users');
+            $this->authorize('create', User::class);
         }
 
         // Authorize role assignment separately
         if (collect($this->selectedRoles)->diff($this->user?->roles->pluck('id')->map(fn($id) => (string) $id))->isNotEmpty()) {
-            Gate::authorize('assign-roles');
+            $this->authorize('assignRoles', User::class);
         }
 
         $this->validate();
@@ -116,6 +116,7 @@ class ManageUser extends Component
             return;
         }
 
+        $this->dispatch('user-saved');
         $this->redirect(route('admin.users.index'), navigate: true);
     }
 

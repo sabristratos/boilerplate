@@ -45,7 +45,7 @@ class UserService
         }
 
         try {
-            $adminUsers = User::whereHas('roles', fn($q) => $q->where('slug', 'admin'))->get();
+            $adminUsers = User::whereHas('roles', fn($q) => $q->where('slug', config('roles.super_admin')))->get();
             if ($adminUsers->isNotEmpty() && auth()->check()) {
                 Notification::send($adminUsers, new UserCreatedNotification($user, auth()->user()));
             }
@@ -106,7 +106,7 @@ class UserService
         );
 
         try {
-            $adminUsers = User::whereHas('roles', fn ($q) => $q->where('slug', 'admin'))->get();
+            $adminUsers = User::whereHas('roles', fn ($q) => $q->where('slug', config('roles.super_admin')))->get();
             if ($adminUsers->isNotEmpty() && auth()->check() && auth()->id() !== $user->id) {
                 Notification::send($adminUsers, new UserDeletedNotification($user->toArray(), auth()->user()));
             }

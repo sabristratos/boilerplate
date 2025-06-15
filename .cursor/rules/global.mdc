@@ -3,59 +3,131 @@ description:
 globs: 
 alwaysApply: true
 ---
-You are an expert in Laravel, PHP, Livewire, Alpine.js, and the Flux component library. Your primary directive is to generate high-quality, consistent, and maintainable code that integrates seamlessly with the existing project structure and patterns.
+1. Core Technologies & Architecture
+This boilerplate is built on a modern TALL stack, emphasizing a full-stack development experience primarily within PHP and Laravel.
 
-Key Principles
+Laravel 12: The latest version of the PHP framework, providing the backend foundation.
+Livewire 3.6: Used for creating dynamic, reactive interfaces with PHP, minimizing the need for extensive JavaScript.
+Alpine.js: Integrated via the Flux UI kit, used for client-side interactivity where needed.
+Tailwind CSS 4: A utility-first CSS framework for rapid UI development.
+1.1. Application Bootstrapping
+In line with modern Laravel conventions, the application's bootstrap process is centralized in the /bootstrap directory:
 
-Write concise, idiomatic, and strongly-typed code with accurate examples.
-Focus on a component-based architecture using Livewire for dynamic interfaces and Blade for structure.
-Adhere strictly to the project's established conventions and best practices.
-Apply SOLID principles and the DRY (Don't Repeat Yourself) principle.
-Favor composition and modularization over code duplication. Extract reusable logic into services or traits and UI into Blade/Livewire components.
-Use descriptive and consistent names for variables, methods, and components.
-Follow the existing file and directory structure.
-Prefer dependency injection and Laravel's service container for resolving dependencies.
-PHP/Laravel
+Middleware: Registered in bootstrap/app.php. Global and route group middleware are configured here, not in app/Http/Kernel.php.
+Service Providers: Registered in bootstrap/providers.php. This file lists all providers for the application, streamlining their registration from the traditional config/app.php file.
+1.2. Key Third-Party Packages
+The boilerplate integrates several key packages to enhance functionality:
 
-Use PHP 8.1+ features where appropriate (e.g., typed properties, enums, match expressions).
-Adhere to PSR-12 coding standards.
-Use strict typing in all PHP files: declare(strict_types=1);.
-Utilize Laravel's built-in features, facades, and helpers whenever possible.
-Use the existing service layer for business logic.
-Use the Settings facade for all application configuration. Do not hardcode settings.
-Use the ActivityLogger facade for logging all significant user actions (CRUD, auth events, etc.).
-Use the Notifications facade for dispatching all user notifications.
-Use the AttachmentService for handling all file uploads and manipulations.
-Use Livewire's real-time validation with the $rules property. For complex validation in controllers, use Form Requests.
-Use Eloquent ORM for all database interactions.
-Always prevent N+1 issues by eager-loading relationships (with([...])).
-Use database migrations for all schema changes and seeders for initial data.
-Implement model events for related logic (e.g., the deleting event on the Attachment model to remove files).
-Livewire
+livewire/flux: A UI component library for Livewire that provides pre-built, customizable components like buttons, cards, modals, and navigation elements. This is the primary UI kit used across the admin panel.
+spatie/laravel-translatable: Enables easy management of multilingual model attributes by storing translations as JSON in a single database column. This is used extensively in models like Role, Permission, Taxonomy, and Setting.
+jenssegers/agent: A library to parse User-Agent strings, used by the AnalyticsService to identify device types, browsers, and platforms.
+pragmarx/google2fa-laravel & bacon/bacon-qr-code: Used to implement the Two-Factor Authentication (2FA) system.
+2. Authentication and Authorization
+The application features a robust, multi-layered security system.
 
-Use Livewire components for all dynamic interfaces and real-time interactions.
-Maximize the use of Livewire's lifecycle hooks (e.g., mount, updated) and computed properties (#[Computed]).
-Use wire:model for data binding, wire:click for actions, and wire:submit for forms.
-Always provide user feedback for long-running actions using wire:loading and wire:target.
-For UI feedback (toasts, modals), use the Flux::toast() and Flux::modal() helpers from within Livewire components.
-Frontend (Flux, Tailwind CSS, Alpine.js)
+2.1. Authentication
+Standard Auth: Uses Laravel's default session-based web guard. All authentication views (login, register, forgot password, etc.) are handled by Livewire components found in app/Livewire/Auth/.
+Two-Factor Authentication (2FA): A complete 2FA system is implemented.
+Service: App\Services\TwoFactorAuthenticationService handles the logic for generating secret keys, recovery codes, and QR codes.
+Middleware: App\Http/Middleware/EnsureTwoFactorChallengeIsComplete.php ensures that users who have enabled 2FA complete the verification step after logging in.
+UI: The livewire.profile.two-factor-authentication and livewire.auth.two-factor-challenge views provide the user interface for managing and verifying 2FA.
+2.2. Roles and Permissions
+A custom, database-driven roles and permissions system is in place, offering fine-grained control over user access.
 
-Use flux: components exclusively within the admin area (routes defined in routes/admin.php).
-The only exception is <flux:icon>, which can be used globally.
-All user-facing strings must be wrapped in the __('...') translation helper.
-Use the English string literal as the key (e.g., __('Delete User')). Do not create dot-notation keys.
-Use Tailwind CSS utility classes for all styling. Adhere to the configuration defined in resources/css/app.css.
-Use Alpine.js for simple, client-side interactions that don't require a server roundtrip.
-Use GSAP for any complex UI animations.
-Implement subtle micro-interactions (e.g., hover effects, transitions) to enhance user experience.
-Before creating a new UI element, check for an existing component in resources/views/components or the Flux library documentation.
-Extract any reusable UI patterns into new Blade components.
-Project Best Practices
+Models: Role and Permission models store the roles and their associated permissions. Both are translatable.
+Authorization Logic: App/Providers/AuthServiceProvider.php is the system's core.
+It uses Gate::before() to grant a user with the Super Admin role (defined in config/roles.php) all permissions implicitly.
+It checks for permissions on the User model via the hasPermission() method, which checks permissions attached to the user's roles.
+User Model Integration: The User model implements the App\Interfaces\HasRoles interface and uses methods like hasRole() and hasPermission() for checks.
+Management: Roles and permissions are managed through Livewire components in app/Livewire/Admin/Roles/, with business logic handled by RoleService and PermissionService.
+2.3. User Status & Impersonation
+User Status: The App\Http\Middleware\CheckUserStatus.php middleware checks if a logged-in user's status is "Active". If not (e.g., "Inactive" or "Suspended"), it logs them out. Statuses are defined in the App\Enums\UserStatus enum.
+Impersonation: The Super Admin can impersonate other non-admin users.
+Service: App\Services\ImpersonationService manages the logic of starting and stopping impersonation by storing the original user's ID in the session.
+Controller: App\Http\Controllers\ImpersonationController handles the routes for this functionality.
+UI: A banner is displayed at the bottom of the screen (livewire.stop-impersonation) when a user is being impersonated.
+3. Core Custom Systems
+The boilerplate includes several powerful, reusable systems.
 
-Strictly follow the route file separation: web.php, admin.php, api.php, and auth.php.
-Use Laravel's built-in authentication and authorization features, including middleware (auth, guest, role, permission) and the existing Two-Factor Authentication flow.
-Manage component state within Livewire properties. For global state, use the database-driven settings system.
-Use Laravel's exception handling. Use try-catch blocks for operations that are expected to fail (e.g., file operations, external API calls) and log errors using the Log facade.
-Use Vite for all frontend asset compilation as configured in vite.config.js.
+3.1. Settings Management
+This is a dynamic, database-driven system for managing application settings, making them configurable through the admin panel without code changes.
 
-Keep Livewire components organized by feature area (e.g., Admin, Auth, Profile).
+Architecture:
+Models: Setting (for individual settings), SettingGroup (to organize settings into tabs in the UI), and SettingFile (a dummy model to enable file attachments for settings).
+Facade: App\Facades\Settings provides a simple, static-like interface (Settings::get('key')) to access the service.
+Service: App\Services\SettingsService contains the core logic, including caching, retrieving, and updating settings.
+Provider: App\Providers\SettingsServiceProvider loads settings from the database and uses them to override Laravel's config() values at boot time. This makes the system deeply integrated.
+Features:
+Typed Settings: Supports various types via the App\Enums\SettingType enum (Text, Checkbox, File, etc.).
+Caching: All settings are cached to prevent excessive database queries. The cache is automatically cleared when a setting is updated.
+Translatable: Display names, descriptions, and select options can be translated.
+UI: Managed via the app/Livewire/Admin/SettingsManagement.php component.
+3.2. Attachment System
+A flexible system allows any Eloquent model to have file attachments.
+
+Architecture:
+Model: Attachment stores file metadata (path, disk, MIME type, size, etc.).
+Interface: App\Interfaces\Attachable must be implemented by any model that can have attachments.
+Trait: App\Models\Traits\HasAttachments provides the necessary relationship (morphMany) and helper methods (addAttachment, removeAttachment).
+Service: App\Services\AttachmentService handles the file operations: uploading, replacing, deleting, and image optimization (using Intervention/Image).
+Features:
+Polymorphic: Can be attached to any model (e.g., User, SettingFile).
+Configurable: Governed by settings for max upload size, allowed MIME types, and default storage disk.
+Image Optimization: Can automatically resize and compress images based on settings.
+UI: AttachmentManagement provides a full media manager, and UploadAttachment is a reusable component for file uploads.
+3.3. Taxonomy System
+This system provides a way to classify content using vocabularies (Taxonomies) and labels (Terms), similar to WordPress.
+
+Architecture:
+Models: Taxonomy defines a vocabulary (e.g., "Categories", "Tags"). Term defines a specific item within that taxonomy (e.g., "Laravel," "PHP").
+Trait: App\Models\Traits\HasTaxonomies can be added to any model to allow it to be associated with terms.
+Services: TaxonomyService and TermService handle the business logic.
+Features:
+Hierarchical: Taxonomies can be configured as hierarchical, allowing terms to have parent-child relationships (e.g., for nested categories).
+Translatable: Taxonomy and Term names/descriptions are translatable.
+UI: Managed via Livewire components in app/Livewire/Admin/Taxonomies/ and app/Livewire/Admin/Terms/.
+3.4. Custom Facades
+To simplify access to core services, several custom facades are registered:
+
+App\Facades\Settings: Interacts with the SettingsService.
+App\Facades\ActivityLogger: Interacts with the ActivityLoggerService.
+App\Facades\Notifications: Interacts with the NotificationService.
+These provide a clean, expressive API for common tasks throughout the application.
+
+4. UI Patterns and Frontend
+The frontend is built for efficiency and consistency.
+
+UI Kit: The admin panel heavily relies on the livewire/flux component library. Almost all UI elements (<flux:card>, <flux:button>, <flux:table>) are Flux components. This ensures a consistent look and feel and speeds up development.
+Layouts: The application uses a Blade component-based layout system located in resources/views/components/layouts/. Key layouts include:
+base.blade.php: The master layout with HTML head, body, and script setup.
+admin.blade.php: The main layout for the admin panel, including the sidebar and header.
+auth.blade.php: A simple, centered layout for authentication pages.
+frontend.blade.php: A basic layout for public-facing pages.
+Dynamic Styling: The primary theme color is dynamically applied via app/Http/Controllers/DynamicCssController.php. This controller generates a CSS file based on the primary_color setting, allowing for real-time theme changes from the admin panel.
+Livewire-First Approach: Most user interactions are handled by Livewire components, which reduces the need to write custom JavaScript. JS is only used for integrating third-party libraries like GLightbox for image previews.
+5. How to Implement New Features
+To add a new manageable entity (e.g., "Blog Posts") while maintaining consistency with the boilerplate's architecture, follow these steps:
+
+Create Model & Migration:
+
+php artisan make:model Post -mfs
+In the Post model, implement the Attachable interface and use the HasAttachments and HasTaxonomies traits if needed.
+Create Service & Policy:
+
+Create a PostService in app/Services/ to encapsulate business logic (create, update, delete).
+Create a PostPolicy in app/Policies/ to define access control. Register it in AuthServiceProvider.
+Create Livewire Components:
+
+Create an Index component (app/Livewire/Admin/Posts/Index.php) for listing, searching, and sorting posts, mimicking the structure of Users/Index.php.
+Create a ManagePost component (app/Livewire/Admin/Posts/ManagePost.php) for the create/edit form, mimicking Users/ManageUser.php.
+Add Routes:
+
+Add the routes for your new components to routes/admin.php. Protect them with the appropriate can middleware, referencing your PostPolicy.
+Update UI:
+
+Add a link to the admin sidebar in resources/views/components/layouts/admin.blade.php, protecting it with a @can directive.
+Log Activities:
+
+In your PostService, use the ActivityLogger facade to log create, update, and delete events.
+
+By following these established patterns, new features will integrate seamlessly with the existing systems for authentication, settings, file management, and UI.

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Taxonomy;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -10,6 +11,8 @@ use Illuminate\Support\Str;
  */
 class TaxonomyFactory extends Factory
 {
+    protected $model = Taxonomy::class;
+
     /**
      * Define the model's default state.
      *
@@ -17,13 +20,17 @@ class TaxonomyFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->unique()->word;
-
+        $name = $this->faker->words(2, true);
         return [
-            'name' => $name,
+            'name' => [
+                'en' => $name,
+                'fr' => $name . ' (FR)'
+            ],
+            'description' => [
+                'en' => $this->faker->sentence(),
+                'fr' => $this->faker->sentence() . ' (FR)'
+            ],
             'slug' => Str::slug($name),
-            'description' => $this->faker->sentence,
-            'hierarchical' => $this->faker->boolean,
         ];
     }
 }

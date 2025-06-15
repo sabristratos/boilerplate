@@ -6,8 +6,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.admin')]
 class UserProfile extends Component
 {
     public string $name = '';
@@ -61,7 +63,6 @@ class UserProfile extends Component
 
     public function render()
     {
-        return view('livewire.admin.user-profile')
-            ->layout('layouts.admin');
+        return view('livewire.admin.user-profile');
     }
 }

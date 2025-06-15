@@ -12,7 +12,7 @@ interface Attachable
     /**
      * Get all the model's attachments.
      *
-     * @return MorphMany<Attachment>
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function attachments(): MorphMany;
 } 

@@ -36,8 +36,6 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $roles_count
  * @property-read Collection|Attachment[] $attachments
  * @property-read int|null $attachments_count
- * @mixin \App\Models\Traits\HasTaxonomies
- * @mixin \App\Models\Traits\HasAttachments
  */
 class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attachable
 {
@@ -189,6 +187,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
         'email',
         'password',
         'status',
+        'notification_preferences',
     ];
 
     /**
@@ -216,6 +215,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
             'status' => UserStatus::class,
             'two_factor_confirmed_at' => 'datetime',
             'two_factor_recovery_codes' => 'array',
+            'notification_preferences' => 'array',
         ];
     }
 

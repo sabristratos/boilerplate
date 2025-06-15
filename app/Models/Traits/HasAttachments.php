@@ -12,6 +12,8 @@ trait HasAttachments
 {
     /**
      * Get all attachments for the model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany<\App\Models\Attachment, $this>
      */
     public function attachments(): MorphMany
     {

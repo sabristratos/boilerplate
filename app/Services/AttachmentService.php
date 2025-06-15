@@ -51,7 +51,7 @@ class AttachmentService
 
         $storedPath = $this->storeFile($file, $targetPath, $diskName, $options, false);
 
-        return $attachable->attachments()->create([
+        $attachment = $attachable->attachments()->create([
             'filename' => $file->getClientOriginalName(),
             'path' => $storedPath,
             'disk' => $diskName,
@@ -60,6 +60,10 @@ class AttachmentService
             'collection' => $collection,
             'meta' => $meta,
         ]);
+
+        assert($attachment instanceof Attachment);
+
+        return $attachment;
     }
 
     /**

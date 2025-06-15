@@ -4,35 +4,28 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Roles;
 
+use App\Livewire\Traits\WithFiltering;
 use App\Models\Role;
 use App\Services\RoleService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Gate;
 
 #[Layout('components.layouts.admin')]
 class Index extends Component
 {
     use WithPagination;
-
-    public string $search = '';
-    public int $perPage = 10;
-
-    public string $sortBy = 'name';
-    public string $sortDirection = 'asc';
+    use WithFiltering;
 
     public bool $confirmingDelete = false;
     public ?Role $deletingRole = null;
 
-    public function hasFilters(): bool
-    {
-        return !empty($this->search);
-    }
+    protected array $searchableColumns = ['name', 'description'];
 
     #[On('role-saved')]
     public function refresh(): void
@@ -40,32 +33,21 @@ class Index extends Component
         // This will refresh the component rendering the role list.
     }
 
-    public function sort(string $column): void
-    {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortDirection = 'asc';
-        }
-
-        $this->sortBy = $column;
-        $this->resetPage();
-    }
-
     #[On('confirm-delete-role')]
     public function confirmDeleteRole(Role $role): void
     {
-        Gate::authorize('delete-roles');
+        $this->authorize('delete', $role);
         $this->deletingRole = $role;
         $this->confirmingDelete = true;
     }
 
     public function delete(RoleService $roleService): void
     {
-        Gate::authorize('delete-roles');
         if (!$this->deletingRole) {
             return;
         }
+
+        $this->authorize('delete', $this->deletingRole);
 
         try {
             $roleService->deleteRole($this->deletingRole);
@@ -88,25 +70,12 @@ class Index extends Component
         $this->deletingRole = null;
     }
 
-    public function updatedSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedPerPage(): void
-    {
-        $this->resetPage();
-    }
-
     public function render(): View
     {
-        $roles = Role::query()
-            ->withCount(['users', 'permissions'])
-            ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate($this->perPage);
+        $query = Role::query()
+            ->withCount(['permissions', 'users']);
+        $query = $this->applySearching($query, $this->searchableColumns);
+        $roles = $this->applySorting($query)->paginate($this->perPage);
 
         return view('livewire.admin.roles.index', [
             'roles' => $roles,

@@ -105,7 +105,7 @@ The `User` model represents users in the application. It extends `Illuminate\Fou
 $user = User::find(1);
 
 // Checking roles
-if ($user->hasRole('admin')) {
+if ($user->hasRole(config('roles.super_admin'))) {
     // User is an admin
 }
 
@@ -115,7 +115,16 @@ if ($user->hasRole('admin')) {
 
 // Adding a term (assuming $term is an instance of App\Models\Term)
 // $user->addTerm($term);
-```
+
+// Example:
+//
+// ```php
+// Role::create([
+//     'name' => 'Administrator',
+//     'slug' => config('roles.super_admin'),
+//     'description' => 'Full access to all system features',
+// ]);
+// ```
 
 ---
 ## Model Traits
@@ -481,8 +490,8 @@ The `Role` model represents a user role within the application (e.g., Administra
 // Creating a new role
 // $adminRole = Role::create([
 //     'name' => 'Administrator',
-//     'slug' => 'admin',
-//     'description' => 'Has all permissions in the system.'
+//     'slug' => config('roles.super_admin'),
+//     'description' => 'Full access to all system features',
 // ]);
 
 // Finding a role

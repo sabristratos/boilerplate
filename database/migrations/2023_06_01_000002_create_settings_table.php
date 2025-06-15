@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('value')->nullable();
             $table->string('type')->default('text'); // text, textarea, select, checkbox, color, file, etc.
             $table->json('options')->nullable(); // For select, radio, etc.
+            $table->text('validation_rules')->nullable(); // For custom validation rules
             $table->boolean('is_public')->default(false); // Whether this setting is accessible via API
             $table->boolean('is_required')->default(false);
             $table->integer('order')->default(0);

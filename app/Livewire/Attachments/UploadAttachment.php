@@ -13,6 +13,7 @@ use App\Facades\Settings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Flux\Flux;
+use App\Interfaces\Attachable;
 
 /**
  * A Livewire component for uploading files and attaching them to an Eloquent model.
@@ -36,6 +37,7 @@ class UploadAttachment extends Component
 
     /**
      * The model to attach the file to.
+     * @var (Model&Attachable)|null
      */
     public ?Model $model;
 
@@ -133,7 +135,7 @@ class UploadAttachment extends Component
     /**
      * Mount the component and initialize its properties.
      *
-     * @param Model|null $model The Eloquent model to attach files to.
+     * @param (Model&Attachable)|null $model The Eloquent model to attach files to.
      * @param string|null $collection Optional collection name for the attachment.
      * @param bool $showCollectionInput Whether to display the collection input field.
      * @param bool $showLabel Whether to display the main component label.
@@ -145,7 +147,7 @@ class UploadAttachment extends Component
      * @return void
      */
     public function mount(
-        ?Model $model = null,
+        $model = null,
         ?string $collection = null,
         bool $showCollectionInput = true,
         bool $showLabel = true,

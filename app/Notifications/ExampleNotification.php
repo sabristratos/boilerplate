@@ -35,7 +35,7 @@ class ExampleNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         // Use the NotificationService to get the channels based on settings
-        return Notifications::getChannels();
+        return Notifications::getChannels($notifiable);
     }
 
     /**

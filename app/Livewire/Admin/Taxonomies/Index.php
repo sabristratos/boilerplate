@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Taxonomies;
 
+use App\Livewire\Traits\WithFiltering;
 use App\Models\Taxonomy;
 use App\Services\TaxonomyService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
@@ -19,32 +21,18 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
-
-    public string $search = '';
-    public int $perPage = 10;
-    public string $sortBy = 'name';
-    public string $sortDirection = 'asc';
+    use WithFiltering;
 
     public ?string $isHierarchical = null;
 
     public bool $confirmingDelete = false;
     public ?Taxonomy $deletingTaxonomy = null;
 
+    protected array $searchableColumns = ['name', 'description'];
+
     public function hasFilters(): bool
     {
         return !empty($this->search) || ! is_null($this->isHierarchical);
-    }
-
-    public function sort(string $column): void
-    {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortDirection = 'asc';
-        }
-
-        $this->sortBy = $column;
-        $this->resetPage();
     }
 
     #[On('taxonomy-saved')]
@@ -69,7 +57,7 @@ class Index extends Component
         }
 
         try {
-            $taxonomyService->deleteTaxonomy($this->deletingTaxonomy);
+            $taxonomyService->delete($this->deletingTaxonomy);
             Flux::toast(
                 text: __('Taxonomy deleted successfully.'),
                 heading: __('Success'),
@@ -91,18 +79,17 @@ class Index extends Component
 
     public function render(): View
     {
-        $taxonomies = Taxonomy::query()
+        $query = Taxonomy::query()
             ->with(['terms' => fn ($query) => $query->limit(3)])
-            ->withCount('terms')
-            ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->isHierarchical, function ($query, $isHierarchical) {
-                $query->where('hierarchical', $isHierarchical === 'yes');
-            })
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->withCount('terms');
+
+        $query = $this->applySearching($query, $this->searchableColumns);
+
+        $query->when($this->isHierarchical, function (Builder $query, $isHierarchical) {
+            $query->where('hierarchical', $isHierarchical === 'yes');
+        });
+
+        $taxonomies = $this->applySorting($query)->paginate($this->perPage);
 
         return view('livewire.admin.taxonomies.index', [
             'taxonomies' => $taxonomies,

@@ -15,7 +15,7 @@ class SettingsService
     /**
      * Cache key for all settings
      */
-    protected const CACHE_KEY = 'settings';
+    public const CACHE_KEY = 'settings';
 
     /**
      * Cache expiration time in seconds (1 hour)
@@ -86,7 +86,7 @@ class SettingsService
                 );
 
                 // Notify all admin users
-                $admins = User::whereHas('roles', fn ($query) => $query->where('name', 'admin'))->get();
+                $admins = User::whereHas('roles', fn ($query) => $query->where('slug', config('roles.super_admin')))->get();
                 Notification::send($admins, new SettingChangedNotification($setting, $causer, $oldValue, $value));
             }
         }

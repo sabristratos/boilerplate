@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static void send(mixed $users, mixed $notification)
- * @method static array getChannels()
+ * @method static array getChannels(\App\Models\User $user = null)
  *
  * @see \App\Services\NotificationService
  */

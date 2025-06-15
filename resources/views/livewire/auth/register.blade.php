@@ -20,7 +20,6 @@
                         type="text"
                         autocomplete="name"
                         required
-                        :error="$errors->first('name')"
                     />
                 </div>
 
@@ -31,7 +30,6 @@
                         type="email"
                         autocomplete="email"
                         required
-                        :error="$errors->first('email')"
                     />
                 </div>
 
@@ -42,7 +40,6 @@
                         type="password"
                         autocomplete="new-password"
                         required
-                        :error="$errors->first('password')"
                     />
                 </div>
 

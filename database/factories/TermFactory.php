@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Taxonomy;
+use App\Models\Term;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -11,6 +12,8 @@ use Illuminate\Support\Str;
  */
 class TermFactory extends Factory
 {
+    protected $model = Term::class;
+
     /**
      * Define the model's default state.
      *
@@ -18,15 +21,18 @@ class TermFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->unique()->word;
-
+        $name = $this->faker->words(2, true);
         return [
             'taxonomy_id' => Taxonomy::factory(),
-            'name' => $name,
+            'name' => [
+                'en' => $name,
+                'fr' => $name . ' (FR)'
+            ],
+            'description' => [
+                'en' => $this->faker->sentence(),
+                'fr' => $this->faker->sentence() . ' (FR)'
+            ],
             'slug' => Str::slug($name),
-            'description' => $this->faker->sentence,
-            'parent_id' => null,
-            'order' => 0,
         ];
     }
 }

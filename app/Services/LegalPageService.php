@@ -14,9 +14,24 @@ class LegalPageService
 
         $page->is_published = $data['is_published'];
         
-        $page->title = $data['title'];
-        $page->slug = $data['slug'];
-        $page->content = $data['content'];
+        // Handle translations for each locale
+        foreach ($data['title'] as $locale => $title) {
+            if (!empty($title)) {
+                $page->setTranslation('title', $locale, $title);
+            }
+        }
+        
+        foreach ($data['slug'] as $locale => $slug) {
+            if (!empty($slug)) {
+                $page->setTranslation('slug', $locale, $slug);
+            }
+        }
+        
+        foreach ($data['content'] as $locale => $content) {
+            if (!empty($content)) {
+                $page->setTranslation('content', $locale, $content);
+            }
+        }
         
         $page->save();
 

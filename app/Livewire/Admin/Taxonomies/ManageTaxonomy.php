@@ -8,9 +8,7 @@ use App\Models\Taxonomy;
 use App\Services\TaxonomyService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -18,81 +16,125 @@ use Livewire\Component;
 class ManageTaxonomy extends Component
 {
     public ?Taxonomy $taxonomy = null;
-    public string $name = '';
-    public string $description = '';
+
+    public array $name = [];
+    public array $description = [];
     public bool $hierarchical = false;
+    public array $locales;
+    public string $currentLocale;
 
     public function mount(?Taxonomy $taxonomy): void
     {
         $this->taxonomy = $taxonomy;
+        $this->locales = config('app.available_locales', ['en' => 'English']);
+        $this->currentLocale = array_key_first($this->locales);
+
         if ($this->taxonomy?->exists) {
-            Gate::authorize('edit-taxonomies');
-            $this->name = $this->taxonomy->name;
-            $this->description = $this->taxonomy->description ?? '';
+            $this->authorize('update', $this->taxonomy);
+            foreach ($this->locales as $localeCode => $localeName) {
+                $this->name[$localeCode] = $this->taxonomy->getTranslation('name', $localeCode);
+                $this->description[$localeCode] = $this->taxonomy->getTranslation('description', $localeCode);
+            }
             $this->hierarchical = $this->taxonomy->hierarchical;
         } else {
-            Gate::authorize('create-taxonomies');
+            $this->authorize('create', Taxonomy::class);
+            foreach ($this->locales as $localeCode => $localeName) {
+                $this->name[$localeCode] = '';
+                $this->description[$localeCode] = '';
+            }
         }
     }
 
     protected function rules(): array
     {
-        return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('taxonomies', 'name')->ignore($this->taxonomy?->id),
-            ],
-            'description' => 'nullable|string|max:255',
+        $rules = [
             'hierarchical' => 'boolean',
         ];
+
+        $defaultLocale = config('app.fallback_locale');
+
+        foreach ($this->locales as $localeCode => $localeName) {
+            $rules["name.{$localeCode}"] = $localeCode === $defaultLocale
+                ? 'required|string|max:255'
+                : 'nullable|string|max:255';
+            
+            $rules["description.{$localeCode}"] = 'nullable|string|max:255';
+        }
+
+        return $rules;
+    }
+
+    protected function messages(): array
+    {
+        $messages = [];
+
+        $defaultLocale = config('app.fallback_locale');
+
+        foreach ($this->locales as $localeCode => $localeName) {
+            if ($localeCode === $defaultLocale) {
+                $messages["name.{$localeCode}.required"] = __('The name field is required for :locale.', ['locale' => $localeName]);
+            }
+            
+            $messages["name.{$localeCode}.max"] = __('The name field must not exceed 255 characters for :locale.', ['locale' => $localeName]);
+            $messages["description.{$localeCode}.max"] = __('The description field must not exceed 255 characters for :locale.', ['locale' => $localeName]);
+        }
+
+        return $messages;
     }
 
     public function save(TaxonomyService $taxonomyService): void
     {
-        $this->validate();
-
-        $data = [
-            'name' => $this->name,
-            'description' => $this->description,
-            'hierarchical' => $this->hierarchical,
-        ];
+        $this->resetErrorBag();
 
         try {
-            if ($this->taxonomy?->exists) {
-                Gate::authorize('edit-taxonomies');
-                $taxonomyService->updateTaxonomy($this->taxonomy, $data);
-                Flux::toast(
-                    text: __('Taxonomy updated successfully.'),
-                    heading: __('Success'),
-                    variant: 'success'
-                );
-            } else {
-                Gate::authorize('create-taxonomies');
-                $taxonomy = $taxonomyService->createTaxonomy($data);
-                Flux::toast(
-                    text: __('Taxonomy created successfully.'),
-                    heading: __('Success'),
-                    variant: 'success'
-                );
-                $this->redirect(route('admin.taxonomies.edit', $taxonomy), navigate: true);
+            $validated = $this->validate();
 
-                return;
+            $data = [
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'hierarchical' => $validated['hierarchical'],
+            ];
+
+            if ($this->taxonomy?->exists) {
+                $taxonomyService->update($this->taxonomy, $data);
+                Flux::toast(
+                    heading: __('Success'),
+                    text: __('Taxonomy updated successfully.'),
+                    variant: 'success'
+                );
+
+                $this->dispatch('taxonomy-saved');
+            } else {
+                $taxonomy = $taxonomyService->create($data);
+                Flux::toast(
+                    heading: __('Success'),
+                    text: __('Taxonomy created successfully.'),
+                    variant: 'success'
+                );
+
+                $this->redirect(
+                    route('admin.taxonomies.edit', ['taxonomy' => $taxonomy->id]),
+                    navigate: true
+                );
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to save taxonomy: ' . $e->getMessage());
+        } catch (\Illuminate\Validation\ValidationException $e) {
             Flux::toast(
-                text: __('Failed to save taxonomy. Please try again.'),
-                heading: __('Error'),
+                heading: __('Validation Error'),
+                text: __('Please check the form for errors.'),
                 variant: 'danger'
             );
-
-            return;
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Failed to save taxonomy', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            Flux::toast(
+                heading: __('Error'),
+                text: __('Failed to save taxonomy. Please try again.'),
+                variant: 'danger'
+            );
         }
-
-        $this->dispatch('taxonomy-saved');
-        $this->redirect(route('admin.taxonomies.index'), navigate: true);
     }
 
     public function render(): View

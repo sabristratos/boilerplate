@@ -1,52 +1,80 @@
 <div>
     <div class="flex justify-between items-center mb-4">
-        <flux:heading size="xl">
-            {{ $legalPage->exists ? __('Edit Page') : __('Create Page') }}
-        </flux:heading>
-        <flux:button :href="route('admin.legal.index')" variant="outline" icon="arrow-left" tooltip="{{ __('Back to Legal Pages') }}">
-            {{ __('Back to Legal Pages') }}
-        </flux:button>
+        <div class="flex items-center gap-4">
+            <flux:button :href="route('admin.legal-pages.index')" variant="outline" icon="arrow-left" tooltip="{{ __('Back to Legal Pages') }}">
+                {{ __('Back to Legal Pages') }}
+            </flux:button>
+            <flux:heading size="xl">
+                {{ $legalPage->exists ? __('Edit Page') : __('Create Page') }}
+            </flux:heading>
+        </div>
+        <div class="flex items-center gap-2">
+            <flux:icon name="globe-alt" class="w-5 h-5 text-zinc-400" />
+            <flux:select wire:model.live="currentLocale" class="w-40">
+                @foreach($locales as $localeCode => $localeName)
+                    <option value="{{ $localeCode }}">{{ $localeName }}</option>
+                @endforeach
+            </flux:select>
+        </div>
     </div>
 
     <flux:separator variant="subtle" class="my-8" />
 
-    <form wire:submit.prevent="save" class="w-full">
-        <flux:tab.group>
-            <flux:tabs wire:model.live="currentLocale">
-                @foreach($locales as $localeCode => $localeName)
-                    <flux:tab :name="$localeCode">{{ $localeName }}</flux:tab>
-                @endforeach
-            </flux:tabs>
-
-            @foreach($locales as $localeCode => $localeName)
-                <flux:tab.panel :name="$localeCode">
-                    <div class="space-y-4 mt-6">
-                        <flux:input wire:model.lazy="title.{{ $localeCode }}" label="{{ __('Title') }}" description="{{ __('The main title of the legal page.') }}" :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')" />
-                        <flux:input wire:model.lazy="slug.{{ $localeCode }}" label="{{ __('Slug') }}" description="{{ __('The URL-friendly version of the title.') }}" :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')" />
-                        <div wire:ignore>
-                            <flux:editor wire:model="content.{{ $localeCode }}" label="{{ __('Content') }}" description="{{ __('The main content of the legal page.') }}" :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')" />
-                        </div>
-                    </div>
-                </flux:tab.panel>
-            @endforeach
-        </flux:tab.group>
-
-        <div class="mt-6">
-            <flux:card>
-                <flux:switch 
-                    wire:model="is_published"
-                    label="{{ __('Published') }}"
-                    description="{{ __('Toggles the visibility of the page to the public.') }}" 
-                    :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')"
+    <form wire:submit.prevent="save" class="max-w-3xl">
+        <div class="space-y-6">
+            <flux:field>
+                <flux:label>{{ __('Title') }}</flux:label>
+                <flux:description>{{ __('The main title of the legal page.') }}</flux:description>
+                <flux:input 
+                    wire:key="legal-title-{{ $currentLocale }}"
+                    wire:model.defer="title.{{ $currentLocale }}" 
+                    :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')" 
                 />
-            </flux:card>
+                <flux:error name="title.{{ $currentLocale }}" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Slug') }}</flux:label>
+                <flux:description>{{ __('The URL-friendly version of the title.') }}</flux:description>
+                <flux:input 
+                    wire:key="legal-slug-{{ $currentLocale }}"
+                    wire:model.defer="slug.{{ $currentLocale }}" 
+                    :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')" 
+                />
+                <flux:error name="slug.{{ $currentLocale }}" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ __('Content') }}</flux:label>
+                <flux:description>{{ __('The main content of the legal page.') }}</flux:description>
+                <div wire:ignore>
+                    <flux:editor 
+                        wire:key="legal-content-{{ $currentLocale }}"
+                        wire:model.defer="content.{{ $currentLocale }}" 
+                        :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')" 
+                    />
+                </div>
+                <flux:error name="content.{{ $currentLocale }}" />
+            </flux:field>
         </div>
 
-        <div class="md:col-span-3 flex justify-end space-x-3 mt-8">
-            <flux:button type="button" variant="outline" :href="route('admin.legal.index')">
+        <div class="mt-8">
+            <flux:field>
+                <flux:label>{{ __('Published') }}</flux:label>
+                <flux:description>{{ __('Toggles the visibility of the page to the public.') }}</flux:description>
+                <flux:switch 
+                    wire:model="is_published"
+                    :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')"
+                />
+                <flux:error name="is_published" />
+            </flux:field>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+            <flux:button type="button" variant="ghost" :href="route('admin.legal-pages.index')">
                 {{ __('Cancel') }}
             </flux:button>
-            <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save" :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')">
+            <flux:button type="submit" :disabled="!auth()->user()->can($legalPage->exists ? 'edit-legal-pages' : 'create-legal-pages')">
                 <span wire:loading.remove wire:target="save">
                     {{ $legalPage->exists ? __('Save Changes') : __('Create Page') }}
                 </span>

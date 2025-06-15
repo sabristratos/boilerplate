@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('taxonomies', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->json('name');
             $table->string('slug')->unique();
-            $table->string('description')->nullable();
+            $table->json('description')->nullable();
             $table->boolean('hierarchical')->default(false);
             $table->timestamps();
         });

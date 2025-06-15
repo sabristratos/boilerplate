@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Http\Controllers\ImpersonationController;
+use App\Services\ImpersonationService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\RedirectResponse;
 use Livewire\Component;
 use Livewire\Features\SupportRedirects\Redirector;
 
 class StopImpersonation extends Component
 {
-    public function stopImpersonating(): Redirector
+    public function stopImpersonating(ImpersonationService $impersonationService): Redirector
     {
-        app(ImpersonationController::class)->stop();
+        if ($impersonationService->isImpersonating()) {
+            $impersonationService->leave();
+        }
 
-        return redirect()->route('admin.users.index');
+        return $this->redirect(route('admin.dashboard'), navigate: false);
     }
 
     public function render(): View

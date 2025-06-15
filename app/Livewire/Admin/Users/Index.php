@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Users;
 
 use App\Enums\UserStatus;
+use App\Livewire\Traits\WithFiltering;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\UserService;
+use App\Exports\UsersExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -22,18 +26,16 @@ use Livewire\WithPagination;
 class Index extends Component
 {
     use WithPagination;
-
-    public string $search = '';
-    public int $perPage = 10;
-
-    public string $sortBy = 'name';
-    public string $sortDirection = 'asc';
+    use WithFiltering;
 
     public ?string $status = null;
     public ?int $role = null;
 
     public bool $confirmingDelete = false;
     public ?User $deletingUser = null;
+
+    public string $sortBy = 'name';
+    protected array $searchableColumns = ['users.name', 'users.email'];
 
     public function hasFilters(): bool
     {
@@ -44,18 +46,6 @@ class Index extends Component
     public function refresh(): void
     {
         // This will refresh the component rendering the user list.
-    }
-
-    public function sort(string $column): void
-    {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortDirection = 'asc';
-        }
-
-        $this->sortBy = $column;
-        $this->resetPage();
     }
 
     #[On('confirm-delete-user')]
@@ -94,37 +84,37 @@ class Index extends Component
         $this->deletingUser = null;
     }
 
-    public function updatedSearch(): void
+    public function export()
     {
-        $this->resetPage();
+        Gate::authorize('view-users');
+
+        return Excel::download(new UsersExport($this->getUsersQuery()), 'users.xlsx');
     }
 
-    public function updatedPerPage(): void
-    {
-        $this->resetPage();
-    }
-
-    public function render(): View
+    protected function getUsersQuery(): Builder
     {
         $latestSessions = DB::table('sessions')
             ->select('user_id', DB::raw('MAX(last_activity) as last_activity'))
             ->whereNotNull('user_id')
             ->groupBy('user_id');
 
-        $users = User::query()
+        $query = User::query()
             ->leftJoinSub($latestSessions, 'latest_sessions', function ($join) {
                 $join->on('users.id', '=', 'latest_sessions.user_id');
             })
             ->select('users.*', 'latest_sessions.last_activity')
-            ->with(['roles'])
-            ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->status, fn ($query, $status) => $query->where('status', $status))
-            ->when($this->role, fn ($query, $role) => $query->whereRelation('roles', 'roles.id', $role))
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->with(['roles']);
+
+        $query = $this->applySearching($query, $this->searchableColumns);
+        return $query->when($this->status, fn (Builder $query, $status) => $query->where('status', $status))
+            ->when($this->role, fn (Builder $query, $role) => $query->whereRelation('roles', 'roles.id', $role));
+    }
+
+    public function render(): View
+    {
+        $query = $this->getUsersQuery();
+
+        $users = $this->applySorting($query)->paginate($this->perPage);
 
         return view('livewire.admin.users.index', [
             'users' => $users,

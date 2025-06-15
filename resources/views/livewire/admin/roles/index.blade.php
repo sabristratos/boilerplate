@@ -36,6 +36,7 @@
             <flux:table :paginate="$roles">
                 <flux:table.columns>
                     <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">{{ __('Name') }}</flux:table.column>
+                    <flux:table.column>{{ __('Description') }}</flux:table.column>
                     <flux:table.column>{{ __('Permissions') }}</flux:table.column>
                     <flux:table.column>{{ __('Users') }}</flux:table.column>
                     <flux:table.column />
@@ -44,7 +45,9 @@
                     @foreach($roles as $role)
                         <flux:table.row :key="$role->id">
                             <flux:table.cell>
-                                <div class="font-medium text-gray-900 dark:text-white">{{ $role->name }}</div>
+                                <div class="font-medium text-primary-600">{{ $role->name }}</div>
+                            </flux:table.cell>
+                            <flux:table.cell>
                                 <div class="text-sm text-gray-500">{{ $role->description }}</div>
                             </flux:table.cell>
                             <flux:table.cell>

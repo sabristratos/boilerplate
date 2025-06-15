@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('terms', function (Blueprint $table) {
             $table->id();
             $table->foreignId('taxonomy_id')->constrained()->onDelete('cascade');
-            $table->string('name');
+            $table->json('name');
             $table->string('slug');
-            $table->string('description')->nullable();
+            $table->json('description')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->integer('order')->default(0);
             $table->json('meta')->nullable();
