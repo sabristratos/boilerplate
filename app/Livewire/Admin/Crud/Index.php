@@ -3,8 +3,9 @@
 namespace App\Livewire\Admin\Crud;
 
 use App\Crud\CrudConfigInterface;
-use App\Facades\ActivityLogger;
+use App\Events\Crud\EntityDeleted;
 use App\Livewire\Traits\WithFiltering;
+use App\Services\ImpersonationService;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
+use App\Models\User;
 
 class Index extends Component
 {
@@ -25,6 +27,9 @@ class Index extends Component
 
     public ?int $confirmingDeleteId = null;
     public array $filters = [];
+    public array $actions = [];
+    public array $rowActions = [];
+    public array $globalActions = [];
 
     public function mount(string $alias, string $crud_config_class): void
     {
@@ -35,14 +40,68 @@ class Index extends Component
 
         $this->sortBy = $this->config->getDefaultSortField();
         $this->sortDirection = $this->config->getDefaultSortDirection();
+
+        $this->actions = $this->config->getActions();
+        $this->rowActions = collect($this->actions)->where('type', 'row_action')->all();
+        $this->globalActions = collect($this->actions)->where('type', 'global_action')->all();
     }
 
     #[On('confirm-delete')]
     public function askToDelete(int $id): void
     {
+        $this->initConfig();
         $this->authorize($this->config->getPermissionPrefix() . '.delete');
         $this->confirmingDeleteId = $id;
         Flux::modal('confirm-delete-modal')->show();
+    }
+
+    public function handleAction(string $method, ?int $id = null): void
+    {
+        $this->initConfig();
+        $action = collect($this->actions)->firstWhere('method', $method);
+
+        if (!$action) {
+            return;
+        }
+
+        if (isset($action['permission'])) {
+            $this->authorize($action['permission']);
+        }
+
+        if ($id) {
+            $model = $this->config->getModelClass()::findOrFail($id);
+            $this->{$method}($model);
+        } else {
+            $this->{$method}();
+        }
+    }
+
+    public function impersonateUser(User $user, ImpersonationService $impersonationService)
+    {
+        if ($impersonationService->impersonate(auth()->user(), $user)) {
+            return $this->redirect(route('home'));
+        }
+
+        Flux::toast(
+            heading: __('Impersonation Failed'),
+            text: __('Could not impersonate user. You may already be impersonating someone.'),
+            variant: 'danger'
+        );
+    }
+
+    public function copyLink(\App\Models\LegalPage $legalPage)
+    {
+        $url = route('legal.show', [
+            'slug' => $legalPage->getTranslation('slug', $legalPage->first_available_locale)
+        ]);
+
+        $this->dispatch('copy-to-clipboard', text: $url);
+
+        Flux::toast(
+            heading: __('Link Copied'),
+            text: __('The page link has been copied to your clipboard.'),
+            variant: 'success'
+        );
     }
 
     private function initConfig(): void
@@ -64,7 +123,7 @@ class Index extends Component
 
             $model->delete();
 
-            ActivityLogger::logDeleted($model);
+            event(new EntityDeleted($model, auth()->user()));
 
             Flux::toast(
                 heading: __(':entity_name deleted', ['entity_name' => $entityName]),
@@ -100,7 +159,19 @@ class Index extends Component
 
         foreach ($this->filters as $field => $value) {
             if ($value) {
-                $query->where($field, $value);
+                $filterConfig = $this->config->getFilters()[$field] ?? [];
+                $filterType = $filterConfig['type'] ?? 'select';
+
+                if ($filterConfig['relationship'] ?? false) {
+                    $query->whereHas($field, fn (Builder $q) => $q->where('id', $value));
+                    continue;
+                }
+
+                match ($filterType) {
+                    'boolean', 'select' => $query->where($field, $value),
+                    'date' => $query->whereDate($field, $value),
+                    default => $query->where($field, $value),
+                };
             }
         }
 

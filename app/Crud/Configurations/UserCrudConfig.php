@@ -7,6 +7,8 @@ use App\Facades\Settings;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
+use App\Enums\UserStatus;
+use App\Models\Role;
 
 class UserCrudConfig implements CrudConfigInterface
 {
@@ -28,18 +30,39 @@ class UserCrudConfig implements CrudConfigInterface
     public function getTableColumns(): array
     {
         return [
-            ['label' => 'Avatar', 'key' => 'avatar_url', 'type' => 'image'],
-            ['label' => 'Name', 'key' => 'name', 'sortable' => true],
-            ['label' => 'Email', 'key' => 'email', 'sortable' => true],
+            [
+                'label' => 'User',
+                'key' => 'name',
+                'render' => '<x-user-profile-cell :user="$item" />',
+            ],
             [
                 'label' => 'Status',
                 'key' => 'status',
                 'type' => 'badge',
                 'colors' => [
-                    'Active' => 'green',
-                    'Inactive' => 'zinc',
-                    'Suspended' => 'red',
-                ]
+                    UserStatus::Active->value => 'green',
+                    UserStatus::Inactive->value => 'zinc',
+                    UserStatus::Suspended->value => 'orange',
+                ],
+            ],
+            [
+                'label' => 'Roles',
+                'key' => 'roles',
+                'render' => '{{ $item->roles->pluck(\'name\')->implode(\', \') }}',
+            ],
+            [
+                'label' => 'Verified',
+                'key' => 'email_verified_at',
+                'type' => 'badge',
+                'colors' => [
+                    true => 'sky',
+                    false => 'zinc',
+                ],
+            ],
+            [
+                'label' => 'Created At',
+                'key' => 'created_at',
+                'sortable' => true,
             ],
         ];
     }
@@ -47,11 +70,38 @@ class UserCrudConfig implements CrudConfigInterface
     public function getFormFields(): array
     {
         return [
-            ['name' => 'name', 'label' => 'Name', 'type' => 'text'],
-            ['name' => 'email', 'label' => 'Email', 'type' => 'text'],
-            ['name' => 'password', 'label' => 'Password', 'type' => 'password', 'hint' => 'Leave empty to keep current password.'],
-            ['name' => 'password_confirmation', 'label' => 'Confirm Password', 'type' => 'password', 'persist' => false],
-            ['name' => 'avatar', 'label' => 'Avatar', 'type' => 'file'],
+            [
+                'name' => 'name',
+                'label' => 'Name',
+                'type' => 'text',
+                'placeholder' => 'Enter name',
+            ],
+            [
+                'name' => 'email',
+                'label' => 'Email',
+                'type' => 'email',
+                'placeholder' => 'Enter email',
+            ],
+            [
+                'name' => 'status',
+                'label' => 'Status',
+                'type' => 'select',
+                'options' => UserStatus::asSelectArray(),
+            ],
+            [
+                'name' => 'password',
+                'label' => 'Password',
+                'type' => 'password',
+                'placeholder' => 'Enter password',
+                'persist' => false, // Do not persist this field directly
+            ],
+            [
+                'name' => 'roles',
+                'label' => 'Roles',
+                'type' => 'multiselect',
+                'relationship' => 'roles',
+                'options' => Role::all()->pluck('name', 'id')->toArray(),
+            ]
         ];
     }
 
@@ -73,7 +123,7 @@ class UserCrudConfig implements CrudConfigInterface
 
     public function getEagerLoadRelations(): array
     {
-        return [];
+        return ['roles'];
     }
 
     public function getSearchableFields(): array
@@ -82,6 +132,11 @@ class UserCrudConfig implements CrudConfigInterface
     }
 
     public function getPermissionPrefix(): string
+    {
+        return 'users';
+    }
+
+    public function getAlias(): string
     {
         return 'users';
     }
@@ -118,10 +173,26 @@ class UserCrudConfig implements CrudConfigInterface
             'status' => [
                 'label' => 'Status',
                 'type' => 'select',
-                'options' => array_reduce(\App\Enums\UserStatus::cases(), function ($carry, $case) {
-                    $carry[$case->value] = $case->getLabel();
-                    return $carry;
-                }, []),
+                'options' => UserStatus::asSelectArray(),
+            ],
+            'roles' => [
+                'label' => 'Role',
+                'type' => 'select',
+                'options' => Role::all()->pluck('name', 'id')->toArray(),
+                'relationship' => true,
+            ],
+        ];
+    }
+
+    public function getActions(): array
+    {
+        return [
+            [
+                'type' => 'row_action',
+                'label' => 'Impersonate',
+                'icon' => 'user-circle',
+                'method' => 'impersonateUser',
+                'permission' => 'users.impersonate',
             ],
         ];
     }

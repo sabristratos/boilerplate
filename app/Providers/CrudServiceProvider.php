@@ -2,41 +2,38 @@
 
 namespace App\Providers;
 
+use App\Crud\CrudConfigInterface;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use ReflectionClass;
 use Symfony\Component\Finder\SplFileInfo;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class CrudServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton('crud.configurations', function () {
-            $filesystem = new Filesystem();
-            $configPath = app_path('Crud/Configurations');
+        $this->app->singleton('crud.configurations', function (Application $app) {
             $configs = [];
+            $path = app_path('Crud/Configurations');
 
-            if (!$filesystem->isDirectory($configPath)) {
-                return [];
-            }
+            if (File::isDirectory($path)) {
+                $files = File::files($path);
 
-            foreach ($filesystem->files($configPath) as $file) {
-                $class = 'App\\Crud\\Configurations\\' . $file->getFilenameWithoutExtension();
-
-                if (!class_exists($class)) {
-                    continue;
-                }
-
-                $reflection = new ReflectionClass($class);
-                if ($reflection->isInstantiable() && $reflection->implementsInterface(\App\Crud\CrudConfigInterface::class)) {
-                    $configInstance = new $class();
-                    $baseName = str_replace('CrudConfig', '', $file->getFilenameWithoutExtension());
-                    $alias = \Illuminate\Support\Str::plural(strtolower($baseName));
-                    $configs[$alias] = $class;
+                foreach ($files as $file) {
+                    $class = 'App\\Crud\\Configurations\\' . $file->getFilenameWithoutExtension();
+                    if (is_subclass_of($class, CrudConfigInterface::class)) {
+                        $configInstance = new $class();
+                        $alias = $configInstance->getAlias();
+                        $configs[$alias] = $class;
+                    }
                 }
             }
+
             return $configs;
         });
     }

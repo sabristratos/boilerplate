@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# AI Coding Assistant Rules for this Project
+
+## Project Overview
+This project is a feature-rich Laravel 11 boilerplate. The backend is powered by Laravel and a services-based architecture (`app/Services`). The admin panel is built exclusively with Livewire 3 and the **Flux UI Kit**, a package whose documentation is in the `/docs/flux` directory.
+
+## Core Concepts & Architecture
+
+### Modular CRUD System
+- **Location:** `app/Crud/`
+- **Concept:** This is a key feature. To add a new CRUD interface for a model, you don't create new controllers or Livewire components. Instead, you create a new configuration class in `app/Crud/Configurations/` that implements `App\Crud\CrudConfigInterface`.
+- **Routing:** The `CrudServiceProvider` automatically discovers these config classes and registers routes like `/admin/crud/{alias}`. The alias is derived from the config class name (e.g., `ProductCrudConfig` -> `products`).
+
+### Settings Management
+- **Config File:** `config/settings.php` is the source of truth for all settings definitions.
+- **Sync Command:** After modifying `config/settings.php`, run `php artisan settings:sync` to persist the changes to the database.
+- **Facade:** Use the `App\Facades\Settings` facade to get/set setting *values* programmatically.
+- **Public API:** Settings with `'is_public' => true` are exposed via an unauthenticated API (`/api/settings`).
+
+### Authorization
+- **Custom System:** The project uses a custom, built-in role-based access control system. It does **not** use `spatie/laravel-permission`.
+- **CRUD Permissions:** For the modular CRUD system, permissions are automatically checked based on the `getPermissionPrefix()` defined in the CRUD config (e.g., `view-any-users`, `create-users`). For other resources, standard model policies are used.
+
+### Activity Logging
+- **Facade:** `App\Facades\ActivityLogger` is the primary way to interact with the system.
+- **Usage:** It's important to log significant user actions. Use helpers like `ActivityLogger::logCreated($model)` and `ActivityLogger::logUpdated($model)` for standard Eloquent events. Use `ActivityLogger::logCustom(...)` for other actions.
+
+### Taxonomies & Attachments
+- **Concept:** These are generic, reusable systems. To add categorization or file attachments to a model, you use a trait:
+  - `App\Models\Traits\HasTaxonomies`
+  - `App\Models\Traits\HasAttachments`
+
+## Common Tasks
+
+- **Adding a new Admin Page for a Model:** The fastest way is to use the modular CRUD system. Create a config file in `app/Crud/Configurations`. Remember to log the create, update, and delete events using the `ActivityLogger` facade within your service or controller logic.
+- **Adding/Modifying a Setting:** 1. Edit `config/settings.php`. 2. Run `php artisan settings:sync`.
+- **Modifying Business Logic:** Find the relevant service class in `app/Services`.
+- **Changing Admin UI Components:** The admin panel is composed of Livewire components in `app/Livewire/Admin`. The UI components themselves are from the Flux package; their usage is documented in `/docs/flux`.
+
+
+

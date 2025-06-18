@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin\Crud;
 
 use App\Crud\CrudConfigInterface;
+use App\Events\Crud\EntityCreated;
+use App\Events\Crud\EntityUpdated;
 use App\Facades\ActivityLogger;
 use App\Facades\Settings;
 use App\Services\AttachmentService;
@@ -128,6 +130,8 @@ class Form extends Component
         }
 
         $wasRecentlyCreated = !$this->model->exists;
+        $oldData = $this->model->getOriginal();
+
         $this->model->save();
 
         // Handle attachments after model is saved
@@ -140,10 +144,20 @@ class Form extends Component
             }
         }
 
+        // Handle ManyToMany relationships
+        foreach ($this->config->getFormFields() as $field) {
+            if (($field['type'] ?? '') === 'multiselect') {
+                $relationshipName = $field['relationship'] ?? $field['name'];
+                if (method_exists($this->model, $relationshipName)) {
+                    $this->model->{$relationshipName}()->sync($this->data[$field['name']] ?? []);
+                }
+            }
+        }
+
         if ($wasRecentlyCreated) {
-            ActivityLogger::logCreated($this->model);
+            event(new EntityCreated($this->model, auth()->user()));
         } else {
-            ActivityLogger::logUpdated($this->model);
+            event(new EntityUpdated($this->model, auth()->user(), $oldData));
         }
 
         Flux::toast(

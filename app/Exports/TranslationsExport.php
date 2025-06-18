@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Translation;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
@@ -20,44 +21,61 @@ class TranslationsExport implements FromCollection, WithHeadings
 
     public function collection()
     {
-        $keys = Translation::query()
-            ->select('key')
-            ->when($this->search, fn ($q) => $q->where('key', 'like', '%' . $this->search . '%')
-                ->orWhere('value', 'like', '%' . $this->search . '%')
-            )
-            ->distinct()
-            ->pluck('key');
+        // 1. Discover all keys from language files
+        $allKeys = $this->discoverAllKeysFromFiles();
 
-        $allTranslations = new Collection();
+        // 2. Query the database for existing translations
+        $dbTranslations = Translation::whereIn('key', $allKeys)
+            ->whereIn('locale', $this->locales)
+            ->get()
+            ->groupBy('key');
 
-        $keyChunks = $keys->chunk(500);
-
-        foreach ($keyChunks as $chunkedKeys) {
-            $translations = Translation::whereIn('key', $chunkedKeys)
-                ->whereIn('locale', $this->locales)
-                ->get()
-                ->groupBy('key');
-
-            $mapped = $chunkedKeys->map(function ($key) use ($translations) {
-                $row = ['original_value' => $key];
-                $keyTranslations = $translations->get($key);
-
+        // 3. Merge and build the final collection
+        $exportCollection = new Collection();
+        foreach ($allKeys as $key) {
+            // Apply search filter
+            if ($this->search && !str_contains($key, $this->search)) {
+                $foundInValue = false;
                 foreach ($this->locales as $locale) {
-                    $translation = $keyTranslations?->firstWhere('locale', $locale);
-                    $row[$locale] = $translation?->value ?? '';
+                    $value = $dbTranslations->get($key)?->firstWhere('locale', $locale)?->value ?? '';
+                    if (str_contains($value, $this->search)) {
+                        $foundInValue = true;
+                        break;
+                    }
                 }
+                if (!$foundInValue) {
+                    continue;
+                }
+            }
 
-                return $row;
-            });
-
-            $allTranslations = $allTranslations->concat($mapped);
+            $row = ['key' => $key];
+            foreach ($this->locales as $locale) {
+                $row[$locale] = $dbTranslations->get($key)?->firstWhere('locale', $locale)?->value ?? '';
+            }
+            $exportCollection->push($row);
         }
 
-        return $allTranslations;
+        return $exportCollection;
+    }
+
+    protected function discoverAllKeysFromFiles(): array
+    {
+        $allKeys = [];
+        $langPath = lang_path();
+        $jsonFiles = File::files($langPath);
+
+        foreach ($jsonFiles as $file) {
+            if ($file->getExtension() === 'json') {
+                $content = json_decode($file->getContents(), true);
+                $allKeys = array_merge($allKeys, array_keys($content));
+            }
+        }
+
+        return array_unique($allKeys);
     }
 
     public function headings(): array
     {
-        return array_merge(['original_value'], $this->locales);
+        return array_merge(['key'], $this->locales);
     }
 } 

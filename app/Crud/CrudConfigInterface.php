@@ -47,6 +47,11 @@ interface CrudConfigInterface
     public function getPermissionPrefix(): string;
 
     /**
+     * Get the URL alias for the entity.
+     */
+    public function getAlias(): string;
+
+    /**
      * A hook to modify data before it is saved.
      */
     public function beforeSave(Model $model, array $data): Model;
@@ -80,4 +85,9 @@ interface CrudConfigInterface
      * Get the validation rules for the form.
      */
     public function getValidationRules(Model $model): array;
+
+    /**
+     * Get the custom actions for the entity.
+     */
+    public function getActions(): array;
 } 

@@ -6,7 +6,10 @@ use App\Facades\Settings;
 use App\Models\Translation;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -32,6 +35,8 @@ class ManageTranslations extends Component
     public array $selectedLocales = [];
 
     public array $translationsData = [];
+
+    public array $paginatedKeysArray = [];
 
     public string $defaultLocale;
 
@@ -77,7 +82,12 @@ class ManageTranslations extends Component
             'translationsData.*.*' => 'string|nullable',
         ]);
 
-        foreach ($this->translationsData as $key => $values) {
+        foreach ($this->translationsData as $index => $values) {
+            if (!isset($this->paginatedKeysArray[$index])) {
+                continue;
+            }
+            $key = $this->paginatedKeysArray[$index];
+
             foreach ($values as $locale => $value) {
                 Translation::updateOrCreate(
                     ['locale' => $locale, 'key' => $key],
@@ -141,36 +151,91 @@ class ManageTranslations extends Component
 
     public function render(): View
     {
-        $keysPaginator = Translation::query()
-            ->select('key')
-            ->when($this->search, fn ($q) => $q->where('key', 'like', '%' . $this->search . '%')
-                ->orWhere('value', 'like', '%' . $this->search . '%')
-            )
-            ->distinct()
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate($this->perPage);
+        $allKeys = $this->getAllKeys();
+        $dbTranslations = Translation::query()
+            ->whereIn('key', $allKeys)
+            ->whereIn('locale', $this->selectedLocales)
+            ->get()
+            ->groupBy('key');
+        $filteredKeys = $this->filterKeys($allKeys, $dbTranslations);
+        $sortedKeys = $this->sortKeys($filteredKeys);
+        $paginatedKeys = $this->paginateKeys($sortedKeys);
 
-        $keys = $keysPaginator->pluck('key');
-
-        $localesToFetch = array_unique(array_merge($this->selectedLocales, [$this->defaultLocale]));
-
-        $translationsOnPage = Translation::query()
-            ->whereIn('key', $keys)
-            ->whereIn('locale', $localesToFetch)
-            ->get();
-
-        $groupedTranslations = $translationsOnPage->groupBy('key');
+        $this->paginatedKeysArray = $paginatedKeys->items();
 
         $this->translationsData = [];
-        foreach ($keys as $key) {
-            foreach ($localesToFetch as $locale) {
-                $translation = $groupedTranslations->get($key)?->firstWhere('locale', $locale);
-                $this->translationsData[$key][$locale] = $translation->value ?? '';
+        foreach ($this->paginatedKeysArray as $index => $key) {
+            foreach ($this->selectedLocales as $locale) {
+                $this->translationsData[$index][$locale] = $dbTranslations->get($key)?->firstWhere('locale', $locale)?->value ?? '';
             }
         }
 
         return view('livewire.admin.translations.manage-translations', [
-            'keys' => $keysPaginator,
+            'keys' => $paginatedKeys,
         ])->layout('components.layouts.admin');
+    }
+
+    private function getAllKeys(): array
+    {
+        $fileKeys = [];
+        $langPath = lang_path();
+        $jsonFiles = File::files($langPath);
+
+        foreach ($jsonFiles as $file) {
+            if ($file->getExtension() === 'json') {
+                $content = json_decode($file->getContents(), true);
+                $fileKeys = array_merge($fileKeys, array_keys($content));
+            }
+        }
+
+        $databaseKeys = Translation::query()->distinct()->pluck('key')->toArray();
+
+        return array_unique(array_merge($fileKeys, $databaseKeys));
+    }
+
+    private function filterKeys(array $keys, Collection $translations): array
+    {
+        if (! $this->search) {
+            return $keys;
+        }
+
+        return array_filter($keys, function ($key) use ($translations) {
+            if (str_contains(strtolower($key), strtolower($this->search))) {
+                return true;
+            }
+
+            if ($translationGroup = $translations->get($key)) {
+                foreach ($translationGroup as $translation) {
+                    if (str_contains(strtolower($translation->value), strtolower($this->search))) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        });
+    }
+
+    private function sortKeys(array $keys): Collection
+    {
+        $collection = new Collection($keys);
+
+        return $collection->sortBy($this->sortBy, SORT_REGULAR, $this->sortDirection === 'desc');
+    }
+
+    private function paginateKeys(Collection $keys): LengthAwarePaginator
+    {
+        $currentPage = $this->getPage();
+        $perPage = $this->perPage;
+
+        $currentPageItems = $keys->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            $currentPageItems,
+            $keys->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
     }
 }

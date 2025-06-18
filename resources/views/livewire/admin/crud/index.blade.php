@@ -10,20 +10,46 @@
                     {{ __('New :entity_name', ['entity_name' => $config->getEntityName()]) }}
                 </flux:button>
             @endcan
+            @foreach($globalActions as $action)
+                @can($action['permission'] ?? null)
+                    <flux:button
+                        wire:click="handleAction('{{ $action['method'] }}')"
+                        :variant="$action['variant'] ?? 'secondary'"
+                    >
+                        {{ __($action['label']) }}
+                    </flux:button>
+                @endcan
+            @endforeach
         </div>
 
         <div class="flex flex-wrap items-end gap-4">
-            <div class="flex-grow" style="min-width: 20rem;">
+            <div class="flex-grow md:flex-grow-0 md:w-80">
                 <flux:input wire:model.live.debounce.500ms="search" :placeholder="__('Search...')" />
             </div>
             @foreach($config->getFilters() as $field => $filter)
                 <div class="flex-grow md:flex-grow-0">
-                    <flux:select wire:model.live.debounce.150ms="filters.{{ $field }}">
-                        <option value="">{{ __($filter['label']) }} (All)</option>
-                        @foreach($filter['options'] as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </flux:select>
+                    @switch($filter['type'] ?? 'select')
+                        @case('select')
+                            <flux:select wire:model.live.debounce.150ms="filters.{{ $field }}">
+                                <option value="">{{ __($filter['label']) }} (All)</option>
+                                @foreach($filter['options'] as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </flux:select>
+                            @break
+                        @case('boolean')
+                            <flux:select wire:model.live.debounce.150ms="filters.{{ $field }}">
+                                <option value="">{{ __($filter['label']) }} (All)</option>
+                                <option value="1">{{ __('Yes') }}</option>
+                                <option value="0">{{ __('No') }}</option>
+                            </flux:select>
+                            @break
+                        @case('date')
+                            <flux:field :label="__($filter['label'])">
+                                <flux:input type="date" wire:model.live.debounce.150ms="filters.{{ $field }}" />
+                            </flux:field>
+                            @break
+                    @endswitch
                 </div>
             @endforeach
             <div class="flex-grow md:flex-grow-0">
@@ -66,24 +92,42 @@
                     <flux:table.row :key="$item->id">
                         @foreach($config->getTableColumns() as $column)
                             <flux:table.cell>
-                                @switch($column['type'] ?? 'default')
-                                    @case('image')
-                                        <img src="{{ data_get($item, $column['key']) }}" alt="{{ $item->name }}" class="h-10 w-10 rounded-full object-cover">
-                                        @break
-                                    @case('badge')
-                                        @php
-                                            $value = data_get($item, $column['key']);
-                                            $colorKey = $value instanceof \UnitEnum ? $value->value : $value;
-                                            $color = $column['colors'][$colorKey] ?? 'zinc';
-                                            $label = $value instanceof \UnitEnum ? $value->getLabel() : (is_bool($value) ? ($value ? __('Yes') : __('No')) : $value);
-                                        @endphp
-                                        <flux:badge :color="$color">
-                                            {{ $label }}
-                                        </flux:badge>
-                                        @break
-                                    @default
-                                        {{ data_get($item, $column['key']) }}
-                                @endswitch
+                                @if(isset($column['render']))
+                                    {!! Blade::render($column['render'], ['item' => $item, 'column' => $column]) !!}
+                                @else
+                                    @switch($column['type'] ?? 'default')
+                                        @case('image')
+                                            <img src="{{ data_get($item, $column['key']) }}" alt="{{ $item->name }}" class="h-10 w-10 rounded-full object-cover">
+                                            @break
+                                        @case('badge')
+                                            @php
+                                                $value = data_get($item, $column['key']);
+                                                $colorKey = $value;
+                                                $labelText = $value;
+
+                                                if (is_null($value) && ($column['key'] === 'email_verified_at')) {
+                                                    $colorKey = false;
+                                                    $labelText = __('No');
+                                                } elseif ($value instanceof \Illuminate\Support\Carbon) {
+                                                    $colorKey = !is_null($value);
+                                                    $labelText = $colorKey ? __('Yes') : __('No');
+                                                } elseif ($value instanceof \UnitEnum) {
+                                                    $colorKey = $value->value;
+                                                    $labelText = $value->getLabel();
+                                                } elseif (is_bool($value)) {
+                                                    $labelText = $value ? __('Yes') : __('No');
+                                                }
+
+                                                $color = $column['colors'][$colorKey] ?? 'zinc';
+                                            @endphp
+                                            <flux:badge :color="$color">
+                                                {{ $labelText }}
+                                            </flux:badge>
+                                            @break
+                                        @default
+                                            {{ data_get($item, $column['key']) }}
+                                    @endswitch
+                                @endif
                             </flux:table.cell>
                         @endforeach
                         <flux:table.cell>
@@ -100,6 +144,17 @@
                                                 {{ __('Edit') }}
                                             </flux:menu.item>
                                         @endcan
+                                        @foreach($rowActions as $action)
+                                            @can($action['permission'] ?? null, $item)
+                                                <flux:menu.item
+                                                    wire:click="handleAction('{{ $action['method'] }}', {{ $item->id }})"
+                                                    :icon="$action['icon'] ?? null"
+                                                    :variant="$action['variant'] ?? 'default'"
+                                                >
+                                                    {{ __($action['label']) }}
+                                                </flux:menu.item>
+                                            @endcan
+                                        @endforeach
                                         @can($config->getPermissionPrefix() . '.delete')
                                             <flux:menu.item
                                                 wire:click="$dispatch('confirm-delete', { id: {{ $item->id }} })"

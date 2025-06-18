@@ -12,34 +12,35 @@
                 <flux:navlist.item icon="home" href="{{ route('admin.dashboard') }}" :current="request()->routeIs('admin.dashboard')">{{ __('Dashboard') }}</flux:navlist.item>
                 @endcan
                 <flux:navlist.group heading="{{ __('Manage') }}" class="mt-4">
-                    <flux:navlist.group icon="user" expandable heading="{{ __('Content') }}" class="grid">
+                    <flux:navlist.group icon="folder" expandable heading="{{ __('Content') }}">
                         @can('viewAny', \App\Models\Attachment::class)
-                        <flux:navlist.item href="{{ route('admin.attachments') }}" :current="request()->routeIs('admin.attachments')">{{ __('Attachments') }}</flux:navlist.item>
+                        <flux:navlist.item icon="photo" href="{{ route('admin.attachments') }}" :current="request()->routeIs('admin.attachments')">{{ __('Attachments') }}</flux:navlist.item>
                         @endcan
-                        <flux:navlist.item href="{{ route('admin.translations.index') }}" :current="request()->routeIs('admin.translations.index')">{{ __('Translations') }}</flux:navlist.item>
+                        <flux:navlist.item icon="language" href="{{ route('admin.translations.index') }}" :current="request()->routeIs('admin.translations.index')">{{ __('Translations') }}</flux:navlist.item>
                         @can('viewAny', \App\Models\Taxonomy::class)
-                        <flux:navlist.item href="{{ route('admin.taxonomies.index') }}" :current="request()->routeIs('admin.taxonomies.*')">{{ __('Taxonomies') }}</flux:navlist.item>
-                        <flux:navlist.item href="{{ route('admin.crud.index', ['alias' => 'taxonomies']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'taxonomies'">{{ __('CRUD Taxonomies') }}</flux:navlist.item>
+                        <flux:navlist.item icon="tag" href="{{ route('admin.crud.index', ['alias' => 'taxonomies']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'taxonomies'">{{ __('Taxonomies') }}</flux:navlist.item>
                         @endcan
                         @can('view-legal-pages')
-                        <flux:navlist.item href="{{ route('admin.legal-pages.index') }}" :current="request()->routeIs('admin.legal-pages.*')">{{ __('Legal') }}</flux:navlist.item>
+                        <flux:navlist.item icon="scale" href="{{ route('admin.crud.index', ['alias' => 'legal-pages']) }}" :current="request()->routeIs('admin.crud.index') && request()->get('alias') === 'legal-pages'">{{ __('Legal') }}</flux:navlist.item>
                         @endcan
                     </flux:navlist.group>
-                    <flux:navlist.group expandable heading="{{ __('User Management') }}" class="grid">
+                    <flux:navlist.group icon="users" expandable heading="{{ __('User Management') }}">
                         @can('view-users')
-                        <flux:navlist.item href="{{ route('admin.users.index') }}" :current="request()->routeIs('admin.users.*')">{{ __('All Users') }}</flux:navlist.item>
-                        <flux:navlist.item href="{{ route('admin.crud.index', ['alias' => 'users']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'users'">{{ __('CRUD Users') }}</flux:navlist.item>
+                        <flux:navlist.item icon="user-group" href="{{ route('admin.crud.index', ['alias' => 'users']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'users'">{{ __('Users') }}</flux:navlist.item>
                         @endcan
                         @can('view-roles')
-                        <flux:navlist.item href="{{ route('admin.roles.index') }}" :current="request()->routeIs('admin.roles.*')">{{ __('Roles & Permissions') }}</flux:navlist.item>
+                        <flux:navlist.item icon="key" href="{{ route('admin.roles.index') }}" :current="request()->routeIs('admin.roles.*')">{{ __('Roles & Permissions') }}</flux:navlist.item>
                         @endcan
                     </flux:navlist.group>
-                    <flux:navlist.group expandable heading="{{ __('System') }}" class="grid">
+                    <flux:navlist.group icon="computer-desktop" expandable heading="{{ __('System') }}">
                         @can('view-activity-logs')
-                        <flux:navlist.item href="{{ route('admin.activity-logs') }}" :current="request()->routeIs('admin.activity-logs')">{{ __('Activity Logs') }}</flux:navlist.item>
+                        <flux:navlist.item icon="clipboard" href="{{ route('admin.activity-logs') }}" :current="request()->routeIs('admin.activity-logs')">{{ __('Activity Logs') }}</flux:navlist.item>
                         @endcan
                         @can('view-notifications')
-                        <flux:navlist.item href="{{ route('admin.notifications') }}" :current="request()->routeIs('admin.notifications')">{{ __('Notifications') }}</flux:navlist.item>
+                        <flux:navlist.item icon="bell" href="{{ route('admin.notifications') }}" :current="request()->routeIs('admin.notifications')">{{ __('Notifications') }}</flux:navlist.item>
+                        @endcan
+                        @can('view-settings')
+                        <flux:navlist.item icon="cog" href="{{ route('admin.settings') }}" :current="request()->routeIs('admin.settings')">{{ __('Settings') }}</flux:navlist.item>
                         @endcan
                     </flux:navlist.group>
                 </flux:navlist.group>

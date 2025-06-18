@@ -4,8 +4,6 @@ use App\Http\Controllers\ImpersonationController;
 use App\Livewire\Admin\ActivityLogManagement;
 use App\Livewire\Admin\AnalyticsDashboard;
 use App\Livewire\Admin\AttachmentManagement;
-use App\Livewire\Admin\Legal\EditLegalPage;
-use App\Livewire\Admin\Legal\LegalPageManagement;
 use App\Livewire\Admin\Roles\Index as RoleIndex;
 use App\Livewire\Admin\Roles\ManageRole;
 use App\Livewire\Admin\SettingsManagement;
@@ -87,12 +85,6 @@ Route::middleware(['can:viewAny,App\Models\Notification'])->group(function () {
     Route::get('/notifications', NotificationManagement::class)->name('notifications');
 });
 
-// Legal Page Management
-Route::middleware(['can:viewAny,App\Models\LegalPage'])->group(function () {
-    Route::get('/legal-pages', LegalPageManagement::class)->name('legal-pages.index');
-    Route::get('/legal-pages/create', EditLegalPage::class)->name('legal-pages.create')->middleware('can:create,App\Models\LegalPage');
-    Route::get('/legal-pages/{legalPage}/edit', EditLegalPage::class)->name('legal-pages.edit')->middleware('can:update,legalPage');
-});
 
 // Generic CRUD Routes
 Route::prefix('crud/{alias}')->name('crud.')->group(function () {

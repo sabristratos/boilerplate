@@ -97,6 +97,11 @@ class TaxonomyCrudConfig implements CrudConfigInterface
         return 'taxonomies';
     }
 
+    public function getAlias(): string
+    {
+        return 'taxonomies';
+    }
+
     public function beforeSave(Model $model, array $data): Model
     {
         $model->slug = Str::slug($model->name);
@@ -147,7 +152,16 @@ class TaxonomyCrudConfig implements CrudConfigInterface
     public function getValidationRules(Model $model): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|array',
+            'name.*' => 'required|string|max:255',
+            'description' => 'nullable|array',
+            'description.*' => 'nullable|string',
+            'hierarchical' => 'boolean',
         ];
+    }
+
+    public function getActions(): array
+    {
+        return [];
     }
 } 

@@ -27,4 +27,12 @@ enum UserStatus: string
             self::Suspended => 'danger',
         };
     }
+
+    public static function asSelectArray(): array
+    {
+        return array_reduce(self::cases(), function ($carry, $case) {
+            $carry[$case->value] = $case->getLabel();
+            return $carry;
+        }, []);
+    }
 } 

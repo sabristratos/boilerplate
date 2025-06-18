@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Events\Crud\EntityCreated;
+use App\Events\Crud\EntityDeleted;
+use App\Events\Crud\EntityUpdated;
+use App\Listeners\Crud\LogEntityCreation;
+use App\Listeners\Crud\LogEntityDeletion;
+use App\Listeners\Crud\LogEntityUpdate;
 use Illuminate\Auth\Events\Failed;
 use App\Listeners\LogFailedLoginAttempt;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -16,6 +22,15 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Failed::class => [
             LogFailedLoginAttempt::class,
+        ],
+        EntityCreated::class => [
+            LogEntityCreation::class,
+        ],
+        EntityUpdated::class => [
+            LogEntityUpdate::class,
+        ],
+        EntityDeleted::class => [
+            LogEntityDeletion::class,
         ],
     ];
 
