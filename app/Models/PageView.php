@@ -66,16 +66,6 @@ class PageView extends Model
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'visited_at' => 'datetime',
-        'user_id' => 'integer',
-    ];
-
-    /**
      * Get the user associated with the page view, if any.
      *
      * @return BelongsTo<User, $this>
@@ -83,5 +73,17 @@ class PageView extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+    /**
+     * The attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'visited_at' => 'datetime',
+            'user_id' => 'integer',
+        ];
     }
 }

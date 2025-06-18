@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class Attachment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'filename',
         'path',
@@ -16,25 +21,13 @@ class Attachment extends Model
         'meta',
     ];
 
-    protected $casts = [
-        'meta' => 'array',
-        'size' => 'integer',
-    ];
-
-    /**
-     * Get the parent attachable model.
-     */
-    public function attachable()
-    {
-        return $this->morphTo();
-    }
-
     /**
      * Get the URL to the file.
      */
-    public function getUrlAttribute()
+    public function getUrlAttribute(): string
     {
-        return \Storage::disk($this->disk)->url($this->path);
+        $cacheKey = 'attachment_url_' . $this->id . '_' . $this->updated_at->timestamp;
+        return Cache::rememberForever($cacheKey, fn() => Storage::disk($this->disk)->url($this->path));
     }
 
     /**
@@ -60,6 +53,22 @@ class Attachment extends Model
     {
         static::deleting(function ($attachment) {
             $attachment->deleteFile();
+            Cache::forget('attachment_url_' . $attachment->id . '_' . $attachment->getOriginal('updated_at')->timestamp);
         });
+
+        static::updated(function ($attachment) {
+            $originalUpdatedAt = $attachment->getOriginal('updated_at');
+            if ($originalUpdatedAt) {
+                $cacheKey = 'attachment_url_' . $attachment->id . '_' . $originalUpdatedAt->timestamp;
+                Cache::forget($cacheKey);
+            }
+        });
+    }
+    protected function casts(): array
+    {
+        return [
+            'meta' => 'array',
+            'size' => 'integer',
+        ];
     }
 }

@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LegalPageController;
 
 // Home route
-Route::get('/', function () {
-    return view('home');
-});
+Route::get('/', fn() => view('home'));
 
 
 // Dashboard route (protected)

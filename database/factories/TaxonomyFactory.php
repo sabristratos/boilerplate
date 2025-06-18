@@ -20,15 +20,15 @@ class TaxonomyFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->words(2, true);
+        $name = fake()->words(2, true);
         return [
             'name' => [
                 'en' => $name,
                 'fr' => $name . ' (FR)'
             ],
             'description' => [
-                'en' => $this->faker->sentence(),
-                'fr' => $this->faker->sentence() . ' (FR)'
+                'en' => fake()->sentence(),
+                'fr' => fake()->sentence() . ' (FR)'
             ],
             'slug' => Str::slug($name),
         ];

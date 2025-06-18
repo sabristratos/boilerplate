@@ -14,19 +14,14 @@ class UserCreatedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public User $createdUser;
-    public User $performingUser;
-
     /**
      * Create a new notification instance.
      *
      * @param User $createdUser The user that was created.
      * @param User $performingUser The user who performed the action.
      */
-    public function __construct(User $createdUser, User $performingUser)
+    public function __construct(public User $createdUser, public User $performingUser)
     {
-        $this->createdUser = $createdUser;
-        $this->performingUser = $performingUser;
     }
 
     /**

@@ -71,22 +71,29 @@ class UserCrudConfig implements CrudConfigInterface
     {
         return [
             [
+                'name' => 'avatar',
+                'label' => __('Avatar'),
+                'type' => 'circular',
+                'collection' => 'avatars',
+                'column_span' => 2,
+            ],
+            [
                 'name' => 'name',
-                'label' => 'Name',
+                'label' => __('Name'),
                 'type' => 'text',
-                'placeholder' => 'Enter name',
+                'required' => true,
+                'sortable' => true,
+                'searchable' => true,
+                'column_span' => 1,
             ],
             [
                 'name' => 'email',
-                'label' => 'Email',
+                'label' => __('Email'),
                 'type' => 'email',
-                'placeholder' => 'Enter email',
-            ],
-            [
-                'name' => 'status',
-                'label' => 'Status',
-                'type' => 'select',
-                'options' => UserStatus::asSelectArray(),
+                'required' => true,
+                'sortable' => true,
+                'searchable' => true,
+                'column_span' => 1,
             ],
             [
                 'name' => 'password',
@@ -94,6 +101,22 @@ class UserCrudConfig implements CrudConfigInterface
                 'type' => 'password',
                 'placeholder' => 'Enter password',
                 'persist' => false, // Do not persist this field directly
+                'column_span' => 1,
+            ],
+            [
+                'name' => 'password_confirmation',
+                'label' => 'Confirm Password',
+                'type' => 'password',
+                'placeholder' => 'Confirm password',
+                'persist' => false,
+                'column_span' => 1,
+            ],
+            [
+                'name' => 'status',
+                'label' => 'Status',
+                'type' => 'select',
+                'options' => UserStatus::asSelectArray(),
+                'column_span' => 1,
             ],
             [
                 'name' => 'roles',
@@ -101,15 +124,15 @@ class UserCrudConfig implements CrudConfigInterface
                 'type' => 'multiselect',
                 'relationship' => 'roles',
                 'options' => Role::all()->pluck('name', 'id')->toArray(),
+                'placeholder' => __('Select Roles...'),
+                'column_span' => 1,
             ]
         ];
     }
 
     public function getAttachableFields(): array
     {
-        return [
-            'avatar' => [],
-        ];
+        return [];
     }
 
     public function getValidationRules(Model $model): array

@@ -11,25 +11,18 @@ class SettingsController extends Controller
 {
     /**
      * Get all public settings
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
         $settings = Settings::public();
 
-        $formattedSettings = $settings->mapWithKeys(function ($setting) {
-            return [$setting->key => $setting->formatted_value];
-        });
+        $formattedSettings = $settings->mapWithKeys(fn($setting) => [$setting->key => $setting->formatted_value]);
 
         return response()->json($formattedSettings);
     }
 
     /**
      * Get a specific public setting
-     *
-     * @param string $key
-     * @return JsonResponse
      */
     public function show(string $key): JsonResponse
     {

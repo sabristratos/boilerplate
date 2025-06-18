@@ -12,9 +12,7 @@ class ActivityLoggerServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(ActivityLoggerService::class, function ($app) {
-            return new ActivityLoggerService();
-        });
+        $this->app->singleton(ActivityLoggerService::class, fn($app) => new ActivityLoggerService());
     }
 
     /**

@@ -21,7 +21,7 @@ class TermFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->words(2, true);
+        $name = fake()->words(2, true);
         return [
             'taxonomy_id' => Taxonomy::factory(),
             'name' => [
@@ -29,8 +29,8 @@ class TermFactory extends Factory
                 'fr' => $name . ' (FR)'
             ],
             'description' => [
-                'en' => $this->faker->sentence(),
-                'fr' => $this->faker->sentence() . ' (FR)'
+                'en' => fake()->sentence(),
+                'fr' => fake()->sentence() . ' (FR)'
             ],
             'slug' => Str::slug($name),
         ];

@@ -18,12 +18,14 @@ class NotificationDigest extends Model
         'frequency',
     ];
 
-    protected $casts = [
-        'data' => 'array',
-    ];
-
     public function notifiable(): MorphTo
     {
         return $this->morphTo();
+    }
+    protected function casts(): array
+    {
+        return [
+            'data' => 'array',
+        ];
     }
 }

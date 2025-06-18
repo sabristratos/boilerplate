@@ -56,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
             if (Schema::hasTable('settings')) {
                 $availableLanguagesSetting = DB::table('settings')->where('key', 'available_languages')->value('value');
                 if ($availableLanguagesSetting) {
-                    $languageCodes = json_decode($availableLanguagesSetting, true);
+                    $languageCodes = json_decode((string) $availableLanguagesSetting, true);
                     if (is_array($languageCodes)) {
                         $languageMap = [
                             'en' => 'English',

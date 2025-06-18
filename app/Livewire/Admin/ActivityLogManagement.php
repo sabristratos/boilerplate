@@ -137,27 +137,13 @@ class ActivityLogManagement extends Component
     public function render()
     {
         $query = ActivityLog::query()
-            ->when($this->search, function ($query) {
-                return $query->where('description', 'like', '%' . $this->search . '%');
-            })
-            ->when($this->logName, function ($query) {
-                return $query->where('log_name', $this->logName);
-            })
-            ->when($this->event, function ($query) {
-                return $query->where('event', $this->event);
-            })
-            ->when($this->dateFrom, function ($query) {
-                return $query->whereDate('created_at', '>=', $this->dateFrom);
-            })
-            ->when($this->dateTo, function ($query) {
-                return $query->whereDate('created_at', '<=', $this->dateTo);
-            })
-            ->when($this->causerId, function ($query) {
-                return $query->where('causer_id', $this->causerId);
-            })
-            ->when($this->subjectType, function ($query) {
-                return $query->where('subject_type', $this->subjectType);
-            })
+            ->when($this->search, fn($query) => $query->where('description', 'like', '%' . $this->search . '%'))
+            ->when($this->logName, fn($query) => $query->where('log_name', $this->logName))
+            ->when($this->event, fn($query) => $query->where('event', $this->event))
+            ->when($this->dateFrom, fn($query) => $query->whereDate('created_at', '>=', $this->dateFrom))
+            ->when($this->dateTo, fn($query) => $query->whereDate('created_at', '<=', $this->dateTo))
+            ->when($this->causerId, fn($query) => $query->where('causer_id', $this->causerId))
+            ->when($this->subjectType, fn($query) => $query->where('subject_type', $this->subjectType))
             ->orderBy($this->sortField, $this->sortDirection);
 
         $logs = $query->paginate($this->perPage);

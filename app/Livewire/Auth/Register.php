@@ -17,29 +17,21 @@ class Register extends Component
 {
     /**
      * User's name
-     *
-     * @var string
      */
     public string $name = '';
 
     /**
      * User's email address
-     *
-     * @var string
      */
     public string $email = '';
 
     /**
      * User's password
-     *
-     * @var string
      */
     public string $password = '';
 
     /**
      * Password confirmation
-     *
-     * @var string
      */
     public string $password_confirmation = '';
 
@@ -77,8 +69,6 @@ class Register extends Component
 
     /**
      * Register a new user
-     *
-     * @return void
      */
     public function register(): void
     {

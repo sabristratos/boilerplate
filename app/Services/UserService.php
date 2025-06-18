@@ -22,7 +22,7 @@ class UserService
 
         $user = User::create($data);
 
-        if (!empty($selectedRoles)) {
+        if ($selectedRoles !== []) {
             $user->roles()->attach($selectedRoles);
         }
 

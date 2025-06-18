@@ -15,9 +15,8 @@ class Translation extends Model
         'value',
     ];
 
-    public function setKeyAttribute(string $value): void
+    protected function key(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        $this->attributes['key'] = $value;
-        $this->attributes['key_hash'] = hash('sha256', $value);
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(set: fn(string $value) => ['key' => $value, 'key_hash' => hash('sha256', $value)]);
     }
 }

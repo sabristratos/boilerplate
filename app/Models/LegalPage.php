@@ -28,20 +28,25 @@ class LegalPage extends Model
         'meta_description',
     ];
 
-    protected $casts = [
-        'is_published' => 'boolean',
-    ];
-
-    public function getAvailableLocalesAsStringAttribute(): string
+    protected function availableLocalesAsString(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return collect($this->getTranslatedLocales('title'))
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: fn() => collect($this->getTranslatedLocales('title'))
             ->filter()
-            ->implode(', ');
+            ->implode(', '));
     }
 
-    public function getFirstAvailableLocaleAttribute(): ?string
+    protected function firstAvailableLocale(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        $locales = $this->getTranslatedLocales('title');
-        return array_shift($locales);
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: function () {
+            $locales = $this->getTranslatedLocales('title');
+            return array_shift($locales);
+        });
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'is_published' => 'boolean',
+        ];
     }
 }

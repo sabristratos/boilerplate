@@ -11,43 +11,31 @@ class TwoFactorAuthentication extends Component
 {
     /**
      * Indicates if 2FA QR code is being displayed.
-     *
-     * @var bool
      */
     public bool $showingQrCode = false;
 
     /**
      * Indicates if 2FA recovery codes are being displayed.
-     *
-     * @var bool
      */
     public bool $showingRecoveryCodes = false;
 
     /**
      * The OTP code for confirming 2FA.
-     *
-     * @var string
      */
     public string $code = '';
 
     /**
      * Confirmation message.
-     *
-     * @var string|null
      */
     public ?string $message = null;
 
     /**
      * Error message.
-     *
-     * @var string|null
      */
     public ?string $error = null;
 
     /**
      * Mount the component.
-     *
-     * @return void
      */
     public function mount(): void
     {
@@ -61,8 +49,6 @@ class TwoFactorAuthentication extends Component
 
     /**
      * Enable two factor authentication for the user.
-     *
-     * @return void
      */
     public function enableTwoFactorAuthentication(): void
     {
@@ -85,8 +71,6 @@ class TwoFactorAuthentication extends Component
 
     /**
      * Confirm two factor authentication for the user.
-     *
-     * @return void
      */
     public function confirmTwoFactorAuthentication(): void
     {
@@ -115,8 +99,6 @@ class TwoFactorAuthentication extends Component
 
     /**
      * Display the user's recovery codes.
-     *
-     * @return void
      */
     public function showRecoveryCodes(): void
     {
@@ -136,8 +118,6 @@ class TwoFactorAuthentication extends Component
 
     /**
      * Generate new recovery codes for the user.
-     *
-     * @return void
      */
     public function regenerateRecoveryCodes(): void
     {
@@ -162,8 +142,6 @@ class TwoFactorAuthentication extends Component
 
     /**
      * Disable two factor authentication for the user.
-     *
-     * @return void
      */
     public function disableTwoFactorAuthentication(): void
     {

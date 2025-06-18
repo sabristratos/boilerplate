@@ -17,7 +17,6 @@ class NotificationService
      *
      * @param \Illuminate\Database\Eloquent\Collection|array|mixed $users The users to notify
      * @param \Illuminate\Notifications\Notification $notification The notification to send
-     * @return void
      */
     public function send($users, LaravelNotification $notification): void
     {
@@ -35,15 +34,15 @@ class NotificationService
 
             if (!method_exists($notification, 'toArray')) {
                 Log::warning('Attempted to queue a notification that does not have a toArray method.', [
-                    'notification' => get_class($notification),
+                    'notification' => $notification::class,
                 ]);
                 continue;
             }
 
             NotificationDigest::create([
-                'notifiable_type' => get_class($user),
+                'notifiable_type' => $user::class,
                 'notifiable_id' => $user->getKey(),
-                'notification_type' => get_class($notification),
+                'notification_type' => $notification::class,
                 'data' => $notification->toArray($user),
                 'frequency' => $frequency,
             ]);
@@ -54,7 +53,6 @@ class NotificationService
      * Get the notification channels based on settings
      *
      * @param \App\Models\User|null $user
-     * @return array
      */
     public function getChannels(User $user = null): array
     {

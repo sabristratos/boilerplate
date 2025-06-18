@@ -16,16 +16,12 @@ class TermService
 
     public function find(int $id): ?Term
     {
-        return Cache::remember("terms.{$id}", self::CACHE_TTL, function () use ($id) {
-            return Term::find($id);
-        });
+        return Cache::remember("terms.{$id}", self::CACHE_TTL, fn() => Term::find($id));
     }
 
     public function getByTaxonomy(int $taxonomyId): Collection
     {
-        return Cache::remember("terms.taxonomy.{$taxonomyId}", self::CACHE_TTL, function () use ($taxonomyId) {
-            return Term::where('taxonomy_id', $taxonomyId)->orderBy('order')->get();
-        });
+        return Cache::remember("terms.taxonomy.{$taxonomyId}", self::CACHE_TTL, fn() => Term::where('taxonomy_id', $taxonomyId)->orderBy('order')->get());
     }
 
     public function create(array $data): Term

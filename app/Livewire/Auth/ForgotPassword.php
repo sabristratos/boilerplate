@@ -14,15 +14,11 @@ class ForgotPassword extends Component
 {
     /**
      * User's email address
-     *
-     * @var string
      */
     public string $email = '';
 
     /**
      * Status message after form submission
-     *
-     * @var string|null
      */
     public ?string $status = null;
 
@@ -53,8 +49,6 @@ class ForgotPassword extends Component
 
     /**
      * Send a password reset link to the user
-     *
-     * @return void
      */
     public function sendResetLink(): void
     {

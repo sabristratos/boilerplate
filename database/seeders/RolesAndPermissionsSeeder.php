@@ -84,7 +84,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $createUsersPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Create Users',
                 'fr' => 'Créer des Utilisateurs',
@@ -98,7 +98,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $editUsersPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Edit Users',
                 'fr' => 'Modifier les Utilisateurs',
@@ -112,7 +112,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $deleteUsersPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Delete Users',
                 'fr' => 'Supprimer des Utilisateurs',
@@ -126,7 +126,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $assignRolesPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Assign Roles',
                 'fr' => 'Attribuer des Rôles',
@@ -155,7 +155,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $createRolesPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Create Roles',
                 'fr' => 'Créer des Rôles',
@@ -169,7 +169,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $editRolesPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Edit Roles',
                 'fr' => 'Modifier les Rôles',
@@ -183,7 +183,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $deleteRolesPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Delete Roles',
                 'fr' => 'Supprimer des Rôles',
@@ -312,7 +312,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Attachment management permissions
-        $viewAttachmentsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'View Attachments',
                 'fr' => 'Voir les Pièces Jointes',
@@ -326,7 +326,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $deleteAttachmentsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Delete Attachments',
                 'fr' => 'Supprimer des Pièces Jointes',
@@ -341,7 +341,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Activity Log permissions
-        $viewActivityLogsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'View Activity Logs',
                 'fr' => 'Voir les Journaux d\'Activité',
@@ -355,7 +355,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $deleteActivityLogsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Delete Activity Logs',
                 'fr' => 'Supprimer des Journaux d\'Activité',
@@ -370,7 +370,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Notification management permissions
-        $viewNotificationsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'View Notifications',
                 'fr' => 'Voir les Notifications',
@@ -384,7 +384,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $createNotificationsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Create Notifications',
                 'fr' => 'Créer des Notifications',
@@ -398,7 +398,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $deleteNotificationsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Delete Notifications',
                 'fr' => 'Supprimer des Notifications',
@@ -499,7 +499,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
         ]);
 
-        $editSettingsPermission = Permission::create([
+        Permission::create([
             'name' => [
                 'en' => 'Edit Settings',
                 'fr' => 'Modifier les Paramètres',

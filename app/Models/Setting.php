@@ -41,69 +41,65 @@ class Setting extends Model
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'options' => 'array',
-        'is_public' => 'boolean',
-        'is_required' => 'boolean',
-        'type' => SettingType::class,
-    ];
-
-    /**
      * Get the group that owns the setting.
      */
     public function group(): BelongsTo
     {
         return $this->belongsTo(SettingGroup::class, 'setting_group_id');
     }
-
     /**
      * Get the formatted value based on the setting type.
-     *
-     * @return mixed
      */
-    public function getFormattedValueAttribute()
+    protected function formattedValue(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        switch ($this->type) {
-            case SettingType::BOOLEAN:
-            case SettingType::CHECKBOX:
-                return (bool) $this->value;
-            case SettingType::NUMBER:
-                return (int) $this->value;
-            case SettingType::JSON:
-                return json_decode($this->value, true);
-            case SettingType::FILE:
-                $attachment = Attachment::find($this->value);
-
-                return $attachment ? $attachment->url . '?v=' . $attachment->updated_at->timestamp : null;
-            default:
-                return $this->value;
-        }
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: function () {
+            switch ($this->type) {
+                case SettingType::BOOLEAN:
+                case SettingType::CHECKBOX:
+                    return (bool) $this->value;
+                case SettingType::NUMBER:
+                    return (int) $this->value;
+                case SettingType::JSON:
+                    return json_decode($this->value, true);
+                case SettingType::FILE:
+                    $attachment = Attachment::find($this->value);
+    
+                    return $attachment ? $attachment->url . '?v=' . $attachment->updated_at->timestamp : null;
+                default:
+                    return $this->value;
+            }
+        });
     }
-
     /**
      * Get the translated options for the current locale.
      *
      * @return array
      */
-    public function getTranslatedOptionsAttribute(): array
+    protected function translatedOptions(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        $locale = app()->getLocale();
-        $options = $this->getTranslation('options', $locale);
-
-        if (is_array($options)) {
-            return $options;
-        }
-
-        // Fallback for older format
-        $allOptions = $this->getTranslations('options');
-        if (isset($allOptions[$locale])) {
-            return $allOptions[$locale];
-        }
-
-        return $allOptions['en'] ?? [];
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: function () {
+            $locale = app()->getLocale();
+            $options = $this->getTranslation('options', $locale);
+            if (is_array($options)) {
+                return $options;
+            }
+            // Fallback for older format
+            $allOptions = $this->getTranslations('options');
+            return $allOptions[$locale] ?? $allOptions['en'] ?? [];
+        });
+    }
+    /**
+     * The attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'options' => 'array',
+            'is_public' => 'boolean',
+            'is_required' => 'boolean',
+            'type' => SettingType::class,
+        ];
     }
 }

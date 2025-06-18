@@ -21,10 +21,6 @@ class ActivityLog extends Model
         'user_agent',
     ];
 
-    protected $casts = [
-        'properties' => 'array',
-    ];
-
     /**
      * Get the subject of the activity.
      */
@@ -55,7 +51,7 @@ class ActivityLog extends Model
     public function scopeForSubject($query, Model $subject)
     {
         return $query
-            ->where('subject_type', get_class($subject))
+            ->where('subject_type', $subject::class)
             ->where('subject_id', $subject->getKey());
     }
 
@@ -65,7 +61,7 @@ class ActivityLog extends Model
     public function scopeCausedBy($query, Model $causer)
     {
         return $query
-            ->where('causer_type', get_class($causer))
+            ->where('causer_type', $causer::class)
             ->where('causer_id', $causer->getKey());
     }
 
@@ -75,5 +71,11 @@ class ActivityLog extends Model
     public function scopeWithEvent($query, string $event)
     {
         return $query->where('event', $event);
+    }
+    protected function casts(): array
+    {
+        return [
+            'properties' => 'array',
+        ];
     }
 }

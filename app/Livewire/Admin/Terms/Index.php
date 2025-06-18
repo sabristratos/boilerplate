@@ -51,7 +51,7 @@ class Index extends Component
     public function delete(TermService $termService): void
     {
         Gate::authorize('delete-terms');
-        if (! $this->deletingTerm) {
+        if (!$this->deletingTerm instanceof \App\Models\Term) {
             return;
         }
 

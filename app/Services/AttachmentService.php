@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\ImageProcessingException;
+use App\Exceptions\UploadFailedException;
 use App\Facades\Settings;
 use App\Interfaces\Attachable;
+use App\Jobs\ProcessAttachmentImage;
 use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
-use Intervention\Image\Interfaces\EncodedImageInterface;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\ImageManager;
 
 class AttachmentService
 {
@@ -21,49 +25,65 @@ class AttachmentService
      * Upload a file and create an attachment record.
      *
      * @param UploadedFile $file The file to upload.
-     * @param \App\Interfaces\Attachable&\Illuminate\Database\Eloquent\Model $attachable The model to attach the file to.
      * @param string|null $collection Optional collection name.
      * @param array<string, mixed> $meta Optional metadata.
      * @param array<string, mixed> $options Options for storage and optimization, overriding global settings.
      * @return \App\Models\Attachment The created attachment record.
-     * @throws \Exception If the attachable model does not have a key, or if file type is not allowed.
+     * @throws UploadFailedException
      */
-    public function upload(UploadedFile $file, Attachable&Model $attachable, ?string $collection = null, array $meta = [], array $options = []): Attachment
+    public function upload(UploadedFile $file, ?string $collection = null, array $meta = [], array $options = []): Attachment
     {
-        $attachableKey = $attachable->getKey();
-        if ($attachableKey === null) {
-            throw new \Exception(__('Attachable model must have a key.'));
+        try {
+            Log::debug('AttachmentService: Starting file upload.', [
+                'original_filename' => $file->getClientOriginalName(),
+                'is_valid' => $file->isValid(),
+                'original_mime_type' => $file->getMimeType(),
+            ]);
+
+            $defaultDisk = Settings::get('attachments_default_disk', 'public');
+            $diskName = $options['disk'] ?? $defaultDisk;
+
+            $baseDir = 'attachments';
+            $dateDir = now()->format('Y/m');
+            $directory = "{$baseDir}/{$dateDir}";
+
+            // Fix for missing mime type and extension
+            $originalMimeType = $file->getMimeType();
+            $mimeType = $originalMimeType ?: 'application/octet-stream';
+            $originalExtension = $file->getClientOriginalExtension();
+            $extension = $originalExtension ?: $file->guessExtension() ?: '';
+            $fileExtension = $extension ? '.' . $extension : '';
+
+            $filenameOnDisk = Str::uuid()->toString() . $fileExtension;
+            $targetPath = $directory . '/' . $filenameOnDisk;
+
+            $fileData = $this->storeFile($file, $directory, $filenameOnDisk, $diskName, $mimeType, $options);
+            $mergedMeta = array_merge($meta, $fileData['meta']);
+
+            $attachment = Attachment::create([
+                'filename' => $file->getClientOriginalName(),
+                'path' => $fileData['path'],
+                'disk' => $diskName,
+                'mime_type' => $mimeType,
+                'size' => $fileData['size'],
+                'collection' => $collection,
+                'meta' => $mergedMeta,
+            ]);
+
+            if ($this->isImageMimeType($mimeType) && ($options['optimize'] ?? (bool)Settings::get('attachments_image_optimization_enabled', true))) {
+                ProcessAttachmentImage::dispatch($attachment, $options);
+            }
+
+            return $attachment;
+        } catch (\Exception $e) {
+            Log::error('Failed to upload file.', [
+                'original_filename' => $file->getClientOriginalName(),
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw new UploadFailedException(__('Failed to upload file: :error', ['error' => $e->getMessage()]), 0, $e);
         }
-
-        $this->validateMimeType($file);
-
-        $defaultDisk = Settings::get('attachments_default_disk', 'public');
-        $diskName = $options['disk'] ?? $defaultDisk;
-
-        $baseDir = 'attachments';
-        $attachableTypeDir = Str::snake(class_basename($attachable));
-        $attachableIdDir = (string) $attachableKey;
-        $directory = "{$baseDir}/{$attachableTypeDir}/{$attachableIdDir}";
-
-        $fileExtension = $file->getClientOriginalExtension() ? '.' . $file->getClientOriginalExtension() : '';
-        $filenameOnDisk = Str::uuid()->toString() . $fileExtension;
-        $targetPath = $directory . '/' . $filenameOnDisk;
-
-        $storedPath = $this->storeFile($file, $targetPath, $diskName, $options, false);
-
-        $attachment = $attachable->attachments()->create([
-            'filename' => $file->getClientOriginalName(),
-            'path' => $storedPath,
-            'disk' => $diskName,
-            'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
-            'size' => $file->getSize() ?: 0,
-            'collection' => $collection,
-            'meta' => $meta,
-        ]);
-
-        assert($attachment instanceof Attachment);
-
-        return $attachment;
     }
 
     /**
@@ -74,109 +94,189 @@ class AttachmentService
      * @param array<string, mixed> $meta Optional metadata to update.
      * @param array<string, mixed> $options Options for storage and optimization, overriding global settings.
      * @return Attachment The updated attachment record.
-     * @throws \Exception If file type is not allowed.
+     * @throws UploadFailedException
      */
     public function replace(Attachment $attachment, UploadedFile $newFile, array $meta = [], array $options = []): Attachment
     {
-        $this->validateMimeType($newFile);
+        try {
+            $originalDisk = $attachment->disk;
+            $originalPath = $attachment->path;
 
-        $originalDisk = $attachment->disk;
-        $originalPath = $attachment->path;
+            $fileData = $this->storeFile($newFile, $originalPath, $originalDisk, $this->getRealMimeType($newFile), $options);
+            $mergedMeta = array_merge($attachment->meta ?? [], $meta, $fileData['meta']);
 
-        $this->storeFile($newFile, $originalPath, $originalDisk, $options, true);
+            $attachment->filename = $newFile->getClientOriginalName();
+            $attachment->mime_type = $this->getRealMimeType($newFile) ?? 'application/octet-stream';
+            $attachment->size = $fileData['size'] ?? $newFile->getSize() ?: 0;
+            $attachment->meta = $mergedMeta;
+            $attachment->save();
 
-        $attachment->filename = $newFile->getClientOriginalName();
-        $attachment->mime_type = $newFile->getMimeType() ?? 'application/octet-stream';
-        $attachment->size = $newFile->getSize() ?: 0;
-        if (!empty($meta)) {
-            $currentMeta = $attachment->meta ?? [];
-            $attachment->meta = array_merge($currentMeta, $meta);
+            if ($this->isImage($newFile) && ($options['optimize'] ?? (bool)Settings::get('attachments_image_optimization_enabled', true))) {
+                ProcessAttachmentImage::dispatch($attachment, $options);
+            }
+
+            return $attachment;
+        } catch (\Exception $e) {
+            Log::error('Failed to replace file.', [
+                'attachment_id' => $attachment->id,
+                'original_filename' => $newFile->getClientOriginalName(),
+                'exception' => $e,
+            ]);
+
+            throw new UploadFailedException(__('Failed to replace file: :error', ['error' => $e->getMessage()]), 0, $e);
         }
-        $attachment->save();
-
-        return $attachment;
     }
 
     /**
-     * Validate the MIME type of the uploaded file against allowed types from settings.
-     *
-     * @param UploadedFile $file
-     * @return void
-     * @throws \Exception If file type is not allowed.
+     * Get the real MIME type of the file.
      */
-    protected function validateMimeType(UploadedFile $file): void
+    public function getRealMimeType(UploadedFile $file): ?string
     {
-        $allowedMimesSetting = Settings::get('attachments_allowed_mime_types', '');
-        if (!empty($allowedMimesSetting)) {
-            $allowedMimes = array_map('trim', explode(',', $allowedMimesSetting));
-            $fileMime = $file->getMimeType();
-            if ($fileMime === null || !in_array($fileMime, $allowedMimes, true)) {
-                throw new \Exception(__('File type not allowed: ') . ($fileMime ?? __('unknown')));
-            }
+        // Use finfo for reliable MIME type detection, similar to the validation rule.
+        if (!$file->isValid()) {
+            return null;
         }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return $file->getMimeType(); // Fallback to less reliable method
+        }
+        $mimeType = finfo_file($finfo, $file->getRealPath());
+        finfo_close($finfo);
+        return $mimeType ?: null;
     }
 
     /**
      * Store a file on disk, potentially optimizing if it's an image.
      *
      * @param UploadedFile $file The file to store.
-     * @param string $targetPath The full target path including filename on the disk.
+     * @param string $directory The directory to store the file in.
+     * @param string $filename The filename to store the file as.
      * @param string $diskName The disk to store the file on.
+     * @param string|null $mimeType The MIME type of the file.
      * @param array<string, mixed> $options Options for storage and optimization.
-     * @param bool $overwrite Whether to overwrite if the file exists.
-     * @return string The path where the file was stored.
+     * @return array{path: string, meta: array} The path where the file was stored and its metadata.
+     * @throws ImageProcessingException|UploadFailedException
      */
-    protected function storeFile(UploadedFile $file, string $targetPath, string $diskName, array $options = [], bool $overwrite = false): string
+    protected function storeFile(UploadedFile $file, string $directory, string $filename, string $diskName, ?string $mimeType, array $options = []): array
     {
-        $optimizeImages = $options['optimize'] ?? (bool)Settings::get('attachments_image_optimization_enabled', true);
+        try {
+            Log::debug('AttachmentService: Starting storeFile with storeAs.', [
+                'directory' => $directory,
+                'filename' => $filename,
+                'diskName' => $diskName,
+                'is_file_valid' => $file->isValid(),
+            ]);
+            
+            $storedPath = $file->storeAs($directory, $filename, ['disk' => $diskName]);
+            if ($storedPath === false) {
+                throw new UploadFailedException(__('Failed to store file on disk using storeAs.'));
+            }
 
-        if ($this->isImage($file) && $optimizeImages) {
-            return $this->storeOptimizedImage($file, $targetPath, $diskName, $options, $overwrite);
+            $finalSize = Storage::disk($diskName)->size($storedPath);
+            $metadata = [];
+
+            if ($this->isImageMimeType($mimeType)) {
+                try {
+                    $fileContents = Storage::disk($diskName)->get($storedPath);
+                    if ($fileContents) {
+                        $driver = extension_loaded('imagick') ? ImagickDriver::class : GdDriver::class;
+                        $manager = new ImageManager($driver);
+                        $image = $manager->read($fileContents);
+                        $metadata = [
+                            'width' => $image->width(),
+                            'height' => $image->height(),
+                        ];
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('AttachmentService: Failed to read image metadata during initial store.', [
+                        'path' => $storedPath,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            
+            return ['path' => $storedPath, 'meta' => $metadata, 'size' => $finalSize];
+        } catch (\Throwable $e) {
+            if ($e instanceof UploadFailedException) {
+                throw $e;
+            }
+            throw new UploadFailedException(__('Error storing file: :error', ['error' => $e->getMessage()]), 0, $e);
         }
-
-        $directory = dirname($targetPath);
-        $filename = basename($targetPath);
-
-        $file->storeAs($directory, $filename, ['disk' => $diskName]);
-        return $targetPath;
     }
 
     /**
-     * Store an optimized image on disk at a specific path.
+     * Process and optimize an image from an attachment.
      *
-     * @param UploadedFile $file The image file to store.
-     * @param string $targetPath The full target path including filename on the disk.
-     * @param string $diskName The disk to store the file on.
+     * @param Attachment $attachment The attachment to process.
      * @param array<string, mixed> $options Options for optimization.
-     * @param bool $overwrite Whether to overwrite if the file exists.
-     * @return string The path where the image was stored.
+     * @throws ImageProcessingException
      */
-    protected function storeOptimizedImage(UploadedFile $file, string $targetPath, string $diskName, array $options = [], bool $overwrite = false): string
+    public function processImage(Attachment $attachment, array $options = []): void
     {
-        $manager = new ImageManager(new GdDriver());
-        $image = $manager->read($file);
-
-        $maxWidth = $options['width'] ?? (int)Settings::get('attachments_image_max_width', 0);
-        $maxHeight = $options['height'] ?? (int)Settings::get('attachments_image_max_height', 0);
-
-        if ($maxWidth > 0 || $maxHeight > 0) {
-            if ($maxWidth > 0 && $maxHeight > 0) {
-                $image->cover($maxWidth, $maxHeight);
-            } elseif ($maxWidth > 0) {
-                $image->scaleDown(width: $maxWidth);
-            } elseif ($maxHeight > 0) {
-                $image->scaleDown(height: $maxHeight);
-            }
+        if (!$attachment->isImage()) {
+            return;
         }
 
-        $quality = $options['quality'] ?? (int)Settings::get('attachments_image_quality', 80);
-        $fileExtension = pathinfo($targetPath, PATHINFO_EXTENSION) ?: $file->getClientOriginalExtension() ?: 'png';
+        try {
+            Log::debug('AttachmentService: Starting image processing.', [
+                'attachment_id' => $attachment->id,
+                'path' => $attachment->path,
+                'disk' => $attachment->disk,
+            ]);
 
-        $encodedImage = $image->encodeByExtension($fileExtension, $quality);
+            $driver = extension_loaded('imagick') ? ImagickDriver::class : GdDriver::class;
+            $manager = new ImageManager($driver);
 
-        Storage::disk($diskName)->put($targetPath, $encodedImage->toString());
+            $imageContents = Storage::disk($attachment->disk)->get($attachment->path);
+            if (empty($imageContents)) {
+                throw new ImageProcessingException('Could not read image contents from storage for optimization.');
+            }
 
-        return $targetPath;
+            $image = $manager->read($imageContents);
+
+            $attachment->meta = array_merge($attachment->meta, [
+                'width' => $image->width(),
+                'height' => $image->height(),
+            ]);
+
+            $quality = $options['quality'] ?? (int)Settings::get('attachments_image_quality', 80);
+            $extension = strtolower(pathinfo($attachment->path, PATHINFO_EXTENSION) ?: 'jpg');
+            
+            Log::debug('AttachmentService: Starting image encoding.', [
+                'attachment_id' => $attachment->id,
+                'quality' => $quality,
+                'extension' => $extension,
+            ]);
+
+            $encodedImage = $image->encodeByExtension($extension, $quality);
+
+            // Explicitly get string content and check if it's valid
+            $contents = (string) $encodedImage;
+
+            if (is_string($contents) && !empty($contents)) {
+                if (Storage::disk($attachment->disk)->put($attachment->path, $contents)) {
+                    $attachment->size = strlen($contents);
+                } else {
+                    throw new ImageProcessingException('Failed to store optimized image, original file remains.');
+                }
+            } else {
+                // Log if encoding results in empty/invalid data, but don't throw an error,
+                // as we can just keep the original, un-optimized file.
+                Log::warning('Image encoding resulted in empty or invalid content, original file remains.', [
+                    'attachment_id' => $attachment->id,
+                    'path' => $attachment->path,
+                ]);
+            }
+
+            $attachment->save();
+
+        } catch (\Throwable $e) {
+            throw new ImageProcessingException(
+                __('Failed to process image for attachment :id. Error: :error', ['id' => $attachment->id, 'error' => $e->getMessage()]),
+                0,
+                $e
+            );
+        }
     }
 
     /**
@@ -187,8 +287,8 @@ class AttachmentService
      */
     protected function isImage(UploadedFile $file): bool
     {
-        $mimeType = $file->getMimeType();
-        return $mimeType !== null && Str::startsWith($mimeType, 'image/');
+        $mimeType = $this->getRealMimeType($file);
+        return $this->isImageMimeType($mimeType);
     }
 
     /**
@@ -200,7 +300,16 @@ class AttachmentService
      */
     public function delete(Attachment $attachment): bool
     {
-        return (bool)$attachment->delete();
+        try {
+            return (bool)$attachment->delete();
+        } catch (\Exception $e) {
+            Log::error('Failed to delete attachment.', [
+                'attachment_id' => $attachment->id,
+                'exception' => $e,
+            ]);
+
+            throw new \Exception(__('Failed to delete attachment.'), 0, $e);
+        }
     }
 
     /**
@@ -212,5 +321,10 @@ class AttachmentService
     public function getUrl(Attachment $attachment): string
     {
         return $attachment->url;
+    }
+
+    protected function isImageMimeType(?string $mimeType): bool
+    {
+        return $mimeType !== null && Str::startsWith($mimeType, 'image/');
     }
 }

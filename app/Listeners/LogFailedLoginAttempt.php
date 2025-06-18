@@ -11,28 +11,21 @@ use Illuminate\Support\Facades\Log;
 class LogFailedLoginAttempt
 {
     /**
-     * The request instance.
-     *
-     * @var \Illuminate\Http\Request
-     */
-    public Request $request;
-
-    /**
      * Create the event listener.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct(
+        /**
+         * The request instance.
+         */
+        public Request $request
+    )
     {
-        $this->request = $request;
     }
 
     /**
      * Handle the event.
-     *
-     * @param  \Illuminate\Auth\Events\Failed  $event
-     * @return void
      */
     public function handle(Failed $event): void
     {

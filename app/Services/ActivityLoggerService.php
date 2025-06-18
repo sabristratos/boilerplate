@@ -18,7 +18,6 @@ class ActivityLoggerService
      * @param string|null $event The event name
      * @param array $properties Additional properties to log
      * @param string|null $logName The name of the log
-     * @return ActivityLog
      */
     public function log(
         string $description,
@@ -28,7 +27,7 @@ class ActivityLoggerService
         array $properties = [],
         ?string $logName = 'default'
     ): ActivityLog {
-        $causer = $causer ?? Auth::user();
+        $causer ??= Auth::user();
 
         $data = [
             'log_name' => $logName,
@@ -39,13 +38,13 @@ class ActivityLoggerService
             'user_agent' => Request::userAgent(),
         ];
 
-        if ($subject) {
-            $data['subject_type'] = get_class($subject);
+        if ($subject instanceof \Illuminate\Database\Eloquent\Model) {
+            $data['subject_type'] = $subject::class;
             $data['subject_id'] = $subject->getKey();
         }
 
         if ($causer) {
-            $data['causer_type'] = get_class($causer);
+            $data['causer_type'] = $causer::class;
             $data['causer_id'] = $causer->getKey();
         }
 
@@ -59,7 +58,6 @@ class ActivityLoggerService
      * @param Model|null $causer The causer of the activity (defaults to current user)
      * @param array $properties Additional properties to log
      * @param string|null $logName The name of the log
-     * @return ActivityLog
      */
     public function logCreated(
         Model $model,
@@ -68,7 +66,7 @@ class ActivityLoggerService
         ?string $logName = null
     ): ActivityLog {
         $modelName = class_basename($model);
-        $logName = $logName ?? strtolower($modelName);
+        $logName ??= strtolower($modelName);
 
         return $this->log(
             "{$modelName} created",
@@ -87,7 +85,6 @@ class ActivityLoggerService
      * @param Model|null $causer The causer of the activity (defaults to current user)
      * @param array $properties Additional properties to log
      * @param string|null $logName The name of the log
-     * @return ActivityLog
      */
     public function logUpdated(
         Model $model,
@@ -96,7 +93,7 @@ class ActivityLoggerService
         ?string $logName = null
     ): ActivityLog {
         $modelName = class_basename($model);
-        $logName = $logName ?? strtolower($modelName);
+        $logName ??= strtolower($modelName);
 
         return $this->log(
             "{$modelName} updated",
@@ -115,7 +112,6 @@ class ActivityLoggerService
      * @param Model|null $causer The causer of the activity (defaults to current user)
      * @param array $properties Additional properties to log
      * @param string|null $logName The name of the log
-     * @return ActivityLog
      */
     public function logDeleted(
         Model $model,
@@ -124,7 +120,7 @@ class ActivityLoggerService
         ?string $logName = null
     ): ActivityLog {
         $modelName = class_basename($model);
-        $logName = $logName ?? strtolower($modelName);
+        $logName ??= strtolower($modelName);
 
         return $this->log(
             "{$modelName} deleted",
@@ -145,7 +141,6 @@ class ActivityLoggerService
      * @param Model|null $causer The causer of the activity (defaults to current user)
      * @param array $properties Additional properties to log
      * @param string|null $logName The name of the log
-     * @return ActivityLog
      */
     public function logCustom(
         string $event,

@@ -16,8 +16,6 @@ class ImpersonationService
 
     /**
      * Check if a user is currently being impersonated.
-     *
-     * @return bool
      */
     public function isImpersonating(): bool
     {
@@ -26,8 +24,6 @@ class ImpersonationService
 
     /**
      * Get the ID of the user who is doing the impersonating.
-     *
-     * @return int|null
      */
     public function getImpersonatorId(): ?int
     {
@@ -39,7 +35,6 @@ class ImpersonationService
      *
      * @param \App\Models\User $impersonator The user who is performing the impersonation.
      * @param \App\Models\User $impersonated The user to be impersonated.
-     * @return bool
      */
     public function impersonate(User $impersonator, User $impersonated): bool
     {
@@ -55,8 +50,6 @@ class ImpersonationService
 
     /**
      * Leave the current impersonation and revert to the original user.
-     *
-     * @return bool
      */
     public function leave(): bool
     {

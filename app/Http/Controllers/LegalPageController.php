@@ -13,6 +13,6 @@ class LegalPageController extends Controller
             ->where('is_published', true)
             ->firstOrFail();
 
-        return view('legal.show', compact('page'));
+        return view('legal.show', ['page' => $page]);
     }
 }

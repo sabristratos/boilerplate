@@ -13,18 +13,11 @@ class ExampleNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public string $message;
-    public ?string $actionText;
-    public ?string $actionUrl;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(string $message, ?string $actionText = null, ?string $actionUrl = null)
+    public function __construct(public string $message, public ?string $actionText = null, public ?string $actionUrl = null)
     {
-        $this->message = $message;
-        $this->actionText = $actionText;
-        $this->actionUrl = $actionUrl;
     }
 
     /**

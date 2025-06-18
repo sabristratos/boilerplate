@@ -37,8 +37,6 @@ class AnalyticsDashboard extends Component
 
     /**
      * Mount the component and load initial analytics data.
-     *
-     * @return void
      */
     public function mount(): void
     {
@@ -47,8 +45,6 @@ class AnalyticsDashboard extends Component
 
     /**
      * Load or refresh analytics data.
-     *
-     * @return void
      */
     public function loadAnalyticsData(): void
     {
@@ -154,8 +150,6 @@ class AnalyticsDashboard extends Component
 
     /**
      * Render the component.
-     *
-     * @return View
      */
     public function render(): View
     {

@@ -3,17 +3,16 @@
 namespace App\Livewire\Admin\Crud;
 
 use App\Crud\CrudConfigInterface;
-use App\Events\Crud\EntityCreated;
-use App\Events\Crud\EntityUpdated;
-use App\Facades\ActivityLogger;
 use App\Facades\Settings;
-use App\Services\AttachmentService;
-use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+use App\Models\Attachment;
+use Flux\Flux;
 
 class Form extends Component
 {
@@ -46,7 +45,7 @@ class Form extends Component
             $this->model = new ($this->config->getModelClass())();
         }
 
-        $this->data = $this->model?->toArray() ?? [];
+        $this->initializeData();
     }
 
     private function initConfig(): void
@@ -66,107 +65,118 @@ class Form extends Component
     {
         $this->data = [];
         foreach ($this->config->getFormFields() as $field) {
+            $fieldName = $field['name'];
+            if (in_array($field['type'], ['file_upload', 'circular'])) {
+                // We don't preload file inputs; they are write-only.
+                $this->data[$fieldName] = null;
+                continue;
+            }
+
             if ($field['translatable'] ?? false) {
-                foreach ($this->getLocales() as $locale => $name) {
-                    $this->data[$field['name']][$locale] = $this->model->getTranslation($field['name'], $locale, false) ?? '';
+                foreach ($this->getLocales() as $locale => $localeName) {
+                    $this->data[$fieldName][$locale] = $this->model->getTranslation($fieldName, $locale, false) ?? '';
                 }
+            } elseif (!isset($field['persist']) || $field['persist'] !== false) {
+                $this->data[$fieldName] = $this->model->getAttribute($fieldName) ?? $field['default'] ?? null;
             } else {
-                $this->data[$field['name']] = $this->model->getAttribute($field['name']) ?? $field['default'] ?? null;
+                $this->data[$fieldName] = null;
             }
         }
     }
 
     public function getLocales(): array
     {
-        $availableLocales = json_decode(Settings::get('available_languages', '[]'), true) ?: [];
+        $availableLocales = json_decode((string) Settings::get('available_languages', '[]'), true) ?: [];
         $allLocales = config('app.available_locales', []);
 
         return array_intersect_key($allLocales, array_flip($availableLocales));
     }
 
-    public function save(AttachmentService $attachmentService): void
+    public function save(): void
     {
         $this->initConfig();
         $this->validate();
-
         $this->authorize($this->model->exists ? 'update' : 'create', $this->model);
 
-        $this->model = $this->config->beforeSave($this->model, $this->data);
+        $allFields = collect($this->config->getFormFields());
+        $fileUploadFields = $allFields->whereIn('type', ['file_upload', 'circular']);
+        $definedFieldNames = $allFields->pluck('name')->all();
 
-        $attachableFields = $this->config->getAttachableFields();
-        $attachmentData = array_intersect_key($this->data, array_flip(array_keys($attachableFields)));
-        $modelData = array_diff_key($this->data, $attachmentData);
+        $formData = collect($this->data)
+            ->except($fileUploadFields->pluck('name')->all())
+            ->only($definedFieldNames)
+            ->all();
 
+        $this->model = $this->config->beforeSave($this->model, $formData);
 
-        // Separate translatable and non-translatable data
-        $translatableData = [];
-        $nonTranslatableData = [];
-        foreach ($this->config->getFormFields() as $field) {
-            // Skip attachment fields
-            if (in_array($field['name'], array_keys($attachableFields))) {
-                continue;
-            }
+        DB::transaction(function () use ($formData, $fileUploadFields) {
+            $relationshipData = [];
+            $persistentData = $formData;
 
-            // Skip fields that should not be persisted
-            if (isset($field['persist']) && $field['persist'] === false) {
-                continue;
-            }
-
-            if ($field['translatable'] ?? false) {
-                if (isset($modelData[$field['name']])) {
-                    $translatableData[$field['name']] = $modelData[$field['name']];
+            foreach ($this->config->getFormFields() as $field) {
+                if (isset($field['relationship'])) {
+                    if (array_key_exists($field['name'], $persistentData)) {
+                        $relationshipData[$field['relationship']] = $persistentData[$field['name']];
+                        unset($persistentData[$field['name']]);
+                    }
                 }
+
+                if (isset($field['persist']) && $field['persist'] === false) {
+                    if (array_key_exists($field['name'], $persistentData)) {
+                        unset($persistentData[$field['name']]);
+                    }
+                }
+            }
+
+            if ($this->model->exists) {
+                $this->model->update($persistentData);
             } else {
-                if (isset($modelData[$field['name']])) {
-                    $nonTranslatableData[$field['name']] = $modelData[$field['name']];
+                $this->model->fill($persistentData);
+                $this->model->save();
+            }
+
+            foreach ($relationshipData as $relationship => $values) {
+                $this->model->{$relationship}()->sync($values ?? []);
+            }
+
+            // Handle file uploads
+            foreach ($fileUploadFields as $field) {
+                $modelName = $field['name'];
+                if (isset($this->data[$modelName]) && !empty($this->data[$modelName])) {
+                    $files = Arr::wrap($this->data[$modelName]);
+
+                    if (!($field['multiple'] ?? false)) {
+                        $this->model->removeAllAttachments($field['collection']);
+                    }
+
+                    foreach ($files as $file) {
+                        $this->model->addAttachment($file, $field['collection']);
+                    }
                 }
             }
+        });
+
+        Flux::toast(__('Saved successfully!'), variant: 'success');
+    }
+
+    public function removeAttachment(int $attachmentId, string $collectionName): void
+    {
+        $this->initConfig();
+        
+        if (!$this->model) {
+            return;
         }
 
-        $this->model->fill($nonTranslatableData);
+        $this->authorize($this->config->getPermissionPrefix() . '.update', $this->model);
 
-        foreach ($translatableData as $field => $translations) {
-            $this->model->setTranslations($field, $translations);
-        }
-
-        $wasRecentlyCreated = !$this->model->exists;
-        $oldData = $this->model->getOriginal();
-
-        $this->model->save();
-
-        // Handle attachments after model is saved
-        foreach ($attachmentData as $collection => $file) {
-            if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-                // Remove existing attachment if there is one
-                $this->model->attachments()->where('collection', $collection)->get()->each->delete();
-                // Upload new one
-                $attachmentService->upload($file, $this->model, $collection);
-            }
-        }
-
-        // Handle ManyToMany relationships
-        foreach ($this->config->getFormFields() as $field) {
-            if (($field['type'] ?? '') === 'multiselect') {
-                $relationshipName = $field['relationship'] ?? $field['name'];
-                if (method_exists($this->model, $relationshipName)) {
-                    $this->model->{$relationshipName}()->sync($this->data[$field['name']] ?? []);
-                }
-            }
-        }
-
-        if ($wasRecentlyCreated) {
-            event(new EntityCreated($this->model, auth()->user()));
+        /** @var Attachment|null $attachment */
+        $attachment = Attachment::find($attachmentId);
+        if ($attachment) {
+            $this->model->removeAttachment($attachment);
+            Flux::toast(__('Attachment removed.'), variant: 'success');
         } else {
-            event(new EntityUpdated($this->model, auth()->user(), $oldData));
+            Flux::toast(__('Attachment not found.'), variant: 'danger');
         }
-
-        Flux::toast(
-            heading: __(':entity_name :action', ['entity_name' => $this->config->getEntityName(), 'action' => $wasRecentlyCreated ? 'created' : 'updated']),
-            text: __('The :entity_name has been saved successfully.', ['entity_name' => strtolower($this->config->getEntityName())]),
-            variant: 'success'
-        );
-
-        $this->redirect(route('admin.crud.index', ['alias' => $this->alias]));
     }
 
     public function render(): View

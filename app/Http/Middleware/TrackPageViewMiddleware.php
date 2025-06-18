@@ -12,24 +12,17 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class TrackPageViewMiddleware
 {
-    protected AnalyticsService $analyticsService;
-
     /**
      * Create a new middleware instance.
-     *
-     * @param AnalyticsService $analyticsService
      */
-    public function __construct(AnalyticsService $analyticsService)
+    public function __construct(protected AnalyticsService $analyticsService)
     {
-        $this->analyticsService = $analyticsService;
     }
 
     /**
      * Handle an incoming request.
      *
-     * @param  Request  $request
      * @param  Closure(Request): (Response)  $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -49,9 +42,6 @@ class TrackPageViewMiddleware
 
     /**
      * Determine if the given request path should be excluded from tracking.
-     *
-     * @param  Request  $request
-     * @return bool
      */
     protected function isExcludedPath(Request $request): bool
     {
@@ -72,23 +62,17 @@ class TrackPageViewMiddleware
         $path = $request->path();
         $excludedExtensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'map'];
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-
-        if (in_array(strtolower($extension), $excludedExtensions, true)) {
-            return true;
-        }
-
-        return false;
+        return in_array(strtolower($extension), $excludedExtensions, true);
     }
 
     /**
      * Determine if the request is likely from a bot.
      *
      * @param string|null $userAgent The user agent string.
-     * @return bool
      */
     protected function isBot(?string $userAgent): bool
     {
-        if (empty($userAgent)) {
+        if ($userAgent === null || $userAgent === '' || $userAgent === '0') {
             return false;
         }
 

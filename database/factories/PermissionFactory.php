@@ -24,11 +24,11 @@ class PermissionFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->unique()->words(2, true);
+        $name = fake()->unique()->words(2, true);
         return [
             'name' => str($name)->title(),
             'slug' => str($name)->slug(),
-            'description' => $this->faker->sentence(),
+            'description' => fake()->sentence(),
         ];
     }
 } 

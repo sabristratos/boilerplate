@@ -30,7 +30,6 @@ class AnalyticsService
      * Uses Jenssegers/Agent for detailed user agent parsing.
      *
      * @param Request $request The current HTTP request.
-     * @return void
      */
     public function track(Request $request): void
     {
@@ -50,10 +49,14 @@ class AnalyticsService
             }
 
             $browserName = $this->agentParser->browser();
-            if ($browserName === false) $browserName = 'unknown';
+            if ($browserName === false) {
+                $browserName = 'unknown';
+            }
 
             $platformName = $this->agentParser->platform();
-            if ($platformName === false) $platformName = 'unknown';
+            if ($platformName === false) {
+                $platformName = 'unknown';
+            }
 
 
             PageView::create([

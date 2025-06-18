@@ -10,13 +10,8 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class TranslationsExport implements FromCollection, WithHeadings
 {
-    protected array $locales;
-    protected ?string $search;
-
-    public function __construct(array $locales, ?string $search = null)
+    public function __construct(protected array $locales, protected ?string $search = null)
     {
-        $this->locales = $locales;
-        $this->search = $search;
     }
 
     public function collection()
@@ -34,7 +29,7 @@ class TranslationsExport implements FromCollection, WithHeadings
         $exportCollection = new Collection();
         foreach ($allKeys as $key) {
             // Apply search filter
-            if ($this->search && !str_contains($key, $this->search)) {
+            if ($this->search && !str_contains((string) $key, $this->search)) {
                 $foundInValue = false;
                 foreach ($this->locales as $locale) {
                     $value = $dbTranslations->get($key)?->firstWhere('locale', $locale)?->value ?? '';

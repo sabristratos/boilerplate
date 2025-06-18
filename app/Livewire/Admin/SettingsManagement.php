@@ -53,7 +53,7 @@ class SettingsManagement extends Component
             if ($setting->type === SettingType::CHECKBOX || $setting->type === SettingType::BOOLEAN) {
                 $this->values[$setting->key] = (bool) $value;
             } elseif ($setting->type === SettingType::MULTISELECT) {
-                $this->values[$setting->key] = json_decode($value, true) ?? [];
+                $this->values[$setting->key] = json_decode((string) $value, true) ?? [];
             } else {
                 $this->values[$setting->key] = $value;
             }
@@ -78,7 +78,6 @@ class SettingsManagement extends Component
         $settingsCollection = Setting::all()->keyBy('key');
         $validationRules = [];
         $validationAttributes = [];
-        $validationMessages = [];
 
         foreach ($settingsCollection as $key => $setting) {
             $rule = [];
@@ -87,10 +86,10 @@ class SettingsManagement extends Component
             }
 
             if ($setting->validation_rules) {
-                $rule = array_merge($rule, explode('|', $setting->validation_rules));
+                $rule = array_merge($rule, explode('|', (string) $setting->validation_rules));
             }
 
-            if (!empty($rule)) {
+            if ($rule !== []) {
                 $validationRules['values.' . $key] = implode('|', $rule);
             }
             $validationAttributes['values.' . $key] = $setting->getTranslation('display_name', $this->currentLocale) ?? $setting->display_name;
@@ -110,7 +109,7 @@ class SettingsManagement extends Component
                 heading: __('Error'),
                 variant: 'danger'
             );
-            return;
+            return null;
         }
 
         foreach ($this->values as $key => $currentValue) {
@@ -146,7 +145,7 @@ class SettingsManagement extends Component
             } elseif ($setting->type === SettingType::MULTISELECT) {
                 // Filter out any false values from the array, which may be sent from unchecked checkboxes.
                 $newValue = (array) $currentValue;
-                if (json_decode($originalValue, true) !== $newValue) {
+                if (json_decode((string) $originalValue, true) !== $newValue) {
                     $isDirty = true;
                     $newValue = json_encode($newValue);
                 }

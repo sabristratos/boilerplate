@@ -28,109 +28,120 @@
     <flux:separator variant="subtle" class="my-8" />
 
     <form wire:submit="save" class="grid grid-cols-12 gap-6">
-        <div class="col-span-12 lg:col-span-8 space-y-6">
-            @foreach($config->getFormFields() as $field)
-                @php
-                    $isTranslatable = $field['translatable'] ?? false;
-                    $modelName = 'data.' . $field['name'];
-                    if ($isTranslatable) {
-                        $modelName .= '.' . $currentLocale;
-                    }
-                    $key = 'form-field.' . $field['name'] . ($isTranslatable ? '.' . $currentLocale : '');
-                @endphp
-                <flux:field>
-                    <flux:label>{{ __($field['label']) }}</flux:label>
-                    @if(isset($field['description']))
-                        <flux:description>{{ __($field['description']) }}</flux:description>
-                    @endif
+        <div class="col-span-12 lg:col-span-8">
+            <div class="grid grid-cols-2 gap-6">
+                @foreach($config->getFormFields() as $field)
+                    @php
+                        $isTranslatable = $field['translatable'] ?? false;
+                        $modelName = 'data.' . $field['name'];
+                        if ($isTranslatable) {
+                            $modelName .= '.' . $currentLocale;
+                        }
+                        $key = 'form-field.' . $field['name'] . ($isTranslatable ? '.' . $currentLocale : '');
+                        $columnSpan = $field['column_span'] ?? 6;
+                    @endphp
+                    <div class="col-span-{{ $columnSpan }}">
+                        <flux:field>
+                            <flux:label>{{ __($field['label']) }}</flux:label>
+                            @if(isset($field['description']))
+                                <flux:description>{{ __($field['description']) }}</flux:description>
+                            @endif
 
-                    @if(isset($field['component']))
-                        <x-dynamic-component
-                            :component="$field['component']"
-                            :attributes="new \Illuminate\View\ComponentAttributeBag(
-                                array_merge($field, ['wire:model.blur' => $modelName])
-                            )"
-                        />
-                    @else
-                        @switch($field['type'])
-                            @case('text')
-                            @case('password')
-                            @case('email')
-                            @case('number')
-                                <flux:input
-                                    wire:key="{{ $key }}"
-                                    wire:model.blur="{{ $modelName }}"
-                                    type="{{ $field['type'] }}"
-                                    placeholder="{{ $field['placeholder'] ?? '' }}"
+                            @if(isset($field['component']))
+                                <x-dynamic-component
+                                    :component="$field['component']"
+                                    :attributes="new \Illuminate\View\ComponentAttributeBag(
+                                        array_merge($field, ['wire:model.blur' => $modelName])
+                                    )"
                                 />
-                                @break
-                            @case('textarea')
-                                <flux:textarea
-                                    wire:key="{{ $key }}"
-                                    wire:model.blur="{{ $modelName }}"
-                                    placeholder="{{ $field['placeholder'] ?? '' }}"
-                                />
-                                @break
-                            @case('checkbox')
-                                <flux:switch
-                                    wire:key="{{ $key }}"
-                                    wire:model.blur="{{ $modelName }}"
-                                />
-                                @break
-                            @case('select')
-                                <flux:select
-                                    wire:key="{{ $key }}"
-                                    wire:model.blur="{{ $modelName }}"
-                                >
-                                    @foreach($field['options'] as $value => $label)
-                                        <option value="{{ $value }}">{{ __($label) }}</option>
-                                    @endforeach
-                                </flux:select>
-                                @break
-                            @case('multiselect')
-                                <flux:select
-                                    wire:key="{{ $key }}"
-                                    wire:model.blur="{{ $modelName }}"
-                                    variant="listbox"
-                                    multiple
-                                    searchable
-                                >
-                                    @foreach($field['options'] as $value => $label)
-                                        <flux:select.option value="{{ $value }}">{{ __($label) }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                                @break
-                            @case('file')
-                                <div class="flex items-center space-x-4">
-                                    @if (isset($this->data[$field['name']]) && !is_string($this->data[$field['name']]))
-                                        <div class="w-16 h-16 rounded-lg overflow-hidden">
-                                            <img src="{{ $this->data[$field['name']]->temporaryUrl() }}" class="w-full h-full object-cover">
+                            @else
+                                @switch($field['type'])
+                                    @case('text')
+                                    @case('password')
+                                    @case('email')
+                                    @case('number')
+                                        <flux:input
+                                            wire:key="{{ $key }}"
+                                            wire:model.blur="{{ $modelName }}"
+                                            type="{{ $field['type'] }}"
+                                            placeholder="{{ $field['placeholder'] ?? '' }}"
+                                        />
+                                        @break
+                                    @case('textarea')
+                                        <flux:textarea
+                                            wire:key="{{ $key }}"
+                                            wire:model.blur="{{ $modelName }}"
+                                            placeholder="{{ $field['placeholder'] ?? '' }}"
+                                        />
+                                        @break
+                                    @case('checkbox')
+                                        <flux:switch
+                                            wire:key="{{ $key }}"
+                                            wire:model.blur="{{ $modelName }}"
+                                        />
+                                        @break
+                                    @case('select')
+                                        <flux:select
+                                            wire:key="{{ $key }}"
+                                            wire:model.blur="{{ $modelName }}"
+                                        >
+                                            @if(isset($field['placeholder']))
+                                                <option value="" disabled>{{ $field['placeholder'] }}</option>
+                                            @endif
+                                            @foreach($field['options'] as $value => $label)
+                                                <option value="{{ $value }}">{{ __($label) }}</option>
+                                            @endforeach
+                                        </flux:select>
+                                        @break
+                                    @case('multiselect')
+                                        <flux:select
+                                            wire:key="{{ $key }}"
+                                            wire:model.blur="{{ $modelName }}"
+                                            variant="listbox"
+                                            multiple
+                                            searchable
+                                            placeholder="{{ $field['placeholder'] ?? '' }}"
+                                        >
+                                            @foreach($field['options'] as $value => $label)
+                                                <flux:select.option value="{{ $value }}">{{ __($label) }}</flux:select.option>
+                                            @endforeach
+                                        </flux:select>
+                                        @break
+                                    @case('file_upload')
+                                        <x-file-upload
+                                            wire:model="data.{{ $field['name'] }}"
+                                            :model="$model"
+                                            :collection="$field['collection']"
+                                            :multiple="$field['multiple'] ?? false"
+                                            :label="$field['label']"
+                                            variant="default"
+                                        />
+                                        @break
+                                    @case('circular')
+                                        <x-file-upload
+                                            wire:model="data.{{ $field['name'] }}"
+                                            :model="$model"
+                                            :collection="$field['collection']"
+                                            :multiple="false"
+                                            :label="$field['label']"
+                                            variant="circular"
+                                        />
+                                        @break
+                                    @case('editor')
+                                        <div wire:ignore>
+                                            <flux:editor
+                                                wire:key="{{ $key }}"
+                                                wire:model.defer="{{ $modelName }}"
+                                            />
                                         </div>
-                                    @elseif($model->attachments->where('collection', $field['name'])->first())
-                                         <div class="w-16 h-16 rounded-lg overflow-hidden">
-                                            <img src="{{ $model->attachments->where('collection', $field['name'])->first()->url }}" class="w-full h-full object-cover">
-                                        </div>
-                                    @endif
-                                    <flux:input
-                                        wire:key="{{ $key }}"
-                                        wire:model.blur="{{ $modelName }}"
-                                        type="file"
-                                    />
-                                </div>
-                                 @break
-                            @case('editor')
-                                 <div wire:ignore>
-                                    <flux:editor
-                                        wire:key="{{ $key }}"
-                                        wire:model.defer="{{ $modelName }}"
-                                    />
-                                </div>
-                                @break
-                        @endswitch
-                    @endif
-                    <flux:error :name="$modelName" />
-                </flux:field>
-            @endforeach
+                                        @break
+                                @endswitch
+                            @endif
+                            <flux:error :name="$modelName" />
+                        </flux:field>
+                    </div>
+                @endforeach
+            </div>
         </div>
 
         <div class="col-span-12 lg:col-span-4">

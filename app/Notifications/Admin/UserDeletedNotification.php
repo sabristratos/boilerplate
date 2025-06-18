@@ -13,19 +13,14 @@ class UserDeletedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public array $deletedUserData; 
-    public User $performingUser;
-
     /**
      * Create a new notification instance.
      *
      * @param array $deletedUserData Data of the user that was deleted (e.g., ['id' => 1, 'name' => 'John Doe']).
      * @param User $performingUser The user who performed the action.
      */
-    public function __construct(array $deletedUserData, User $performingUser)
+    public function __construct(public array $deletedUserData, public User $performingUser)
     {
-        $this->deletedUserData = $deletedUserData;
-        $this->performingUser = $performingUser;
     }
 
     /**

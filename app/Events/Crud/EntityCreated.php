@@ -12,18 +12,10 @@ class EntityCreated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public Model $model;
-    public ?User $causer;
-
     /**
      * Create a new event instance.
-     *
-     * @param Model $model
-     * @param User|null $causer
      */
-    public function __construct(Model $model, ?User $causer)
+    public function __construct(public Model $model, public ?User $causer)
     {
-        $this->model = $model;
-        $this->causer = $causer;
     }
 } 

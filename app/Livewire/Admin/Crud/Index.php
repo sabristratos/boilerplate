@@ -87,6 +87,7 @@ class Index extends Component
             text: __('Could not impersonate user. You may already be impersonating someone.'),
             variant: 'danger'
         );
+        return null;
     }
 
     public function copyLink(\App\Models\LegalPage $legalPage)
@@ -149,7 +150,7 @@ class Index extends Component
         /** @var Builder $query */
         $query = $modelClass::query();
 
-        if ($this->search) {
+        if ($this->search !== '' && $this->search !== '0') {
             $query->where(function (Builder $query) {
                 foreach ($this->config->getSearchableFields() as $field) {
                     $query->orWhere($field, 'like', '%' . $this->search . '%');
@@ -179,7 +180,7 @@ class Index extends Component
             $query->with($this->config->getEagerLoadRelations());
         }
 
-        if ($this->sortBy) {
+        if ($this->sortBy !== '' && $this->sortBy !== '0') {
             $query->orderBy($this->sortBy, $this->sortDirection);
         }
 

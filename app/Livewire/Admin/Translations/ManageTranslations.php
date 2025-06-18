@@ -53,8 +53,8 @@ class ManageTranslations extends Component
     public function mount(): void
     {
         $this->defaultLocale = config('app.locale');
-        $this->allLocales = json_decode(Settings::get('available_languages', '[]'), true) ?: [];
-        if (empty($this->selectedLocales)) {
+        $this->allLocales = json_decode((string) Settings::get('available_languages', '[]'), true) ?: [];
+        if ($this->selectedLocales === []) {
             $this->selectedLocales = $this->allLocales;
         }
     }
@@ -127,7 +127,7 @@ class ManageTranslations extends Component
 
     public function export()
     {
-        $localesToExport = !empty($this->selectedLocales) ? $this->selectedLocales : $this->allLocales;
+        $localesToExport = $this->selectedLocales === [] ? $this->allLocales : $this->selectedLocales;
 
         return Excel::download(new TranslationsExport($localesToExport, $this->search), 'translations.csv');
     }
@@ -200,13 +200,13 @@ class ManageTranslations extends Component
         }
 
         return array_filter($keys, function ($key) use ($translations) {
-            if (str_contains(strtolower($key), strtolower($this->search))) {
+            if (str_contains(strtolower($key), strtolower((string) $this->search))) {
                 return true;
             }
 
             if ($translationGroup = $translations->get($key)) {
                 foreach ($translationGroup as $translation) {
-                    if (str_contains(strtolower($translation->value), strtolower($this->search))) {
+                    if (str_contains(strtolower((string) $translation->value), strtolower((string) $this->search))) {
                         return true;
                     }
                 }

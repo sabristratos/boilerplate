@@ -11,10 +11,8 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 class UsersImport implements ToModel, WithHeadingRow, WithValidation
 {
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function model(array $row)
     {
         return new User([

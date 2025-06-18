@@ -31,14 +31,14 @@ class ManageTaxonomy extends Component
 
         if ($this->taxonomy?->exists) {
             $this->authorize('update', $this->taxonomy);
-            foreach ($this->locales as $localeCode => $localeName) {
+            foreach (array_keys($this->locales) as $localeCode) {
                 $this->name[$localeCode] = $this->taxonomy->getTranslation('name', $localeCode);
                 $this->description[$localeCode] = $this->taxonomy->getTranslation('description', $localeCode);
             }
             $this->hierarchical = $this->taxonomy->hierarchical;
         } else {
             $this->authorize('create', Taxonomy::class);
-            foreach ($this->locales as $localeCode => $localeName) {
+            foreach (array_keys($this->locales) as $localeCode) {
                 $this->name[$localeCode] = '';
                 $this->description[$localeCode] = '';
             }
@@ -53,7 +53,7 @@ class ManageTaxonomy extends Component
 
         $defaultLocale = config('app.fallback_locale');
 
-        foreach ($this->locales as $localeCode => $localeName) {
+        foreach (array_keys($this->locales) as $localeCode) {
             $rules["name.{$localeCode}"] = $localeCode === $defaultLocale
                 ? 'required|string|max:255'
                 : 'nullable|string|max:255';

@@ -15,23 +15,19 @@ class RoleService
 
     public function all(): Collection
     {
-        return Cache::remember('roles.all', self::CACHE_TTL, function () {
-            return Role::with('permissions')->get();
-        });
+        return Cache::remember('roles.all', self::CACHE_TTL, fn() => Role::with('permissions')->get());
     }
 
     public function find(int $id): ?Role
     {
-        return Cache::remember("roles.{$id}", self::CACHE_TTL, function () use ($id) {
-            return Role::with('permissions')->find($id);
-        });
+        return Cache::remember("roles.{$id}", self::CACHE_TTL, fn() => Role::with('permissions')->find($id));
     }
 
     public function createRole(array $data, array $selectedPermissions): Role
     {
         $role = Role::create($data);
 
-        if (!empty($selectedPermissions)) {
+        if ($selectedPermissions !== []) {
             $role->permissions()->attach($selectedPermissions);
         }
 

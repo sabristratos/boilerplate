@@ -51,11 +51,6 @@ class Term extends Model
         'meta',
     ];
 
-    protected $casts = [
-        'meta' => 'array',
-        'order' => 'integer',
-    ];
-
     /**
      * Get the taxonomy that the term belongs to.
      */
@@ -131,23 +126,30 @@ class Term extends Model
     {
         return $this->children()->with('descendants')->get();
     }
-
     /**
      * Get the available locales as a string.
      */
-    public function getAvailableLocalesAsStringAttribute(): string
+    protected function availableLocalesAsString(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return collect($this->getTranslatedLocales('name'))
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: fn() => collect($this->getTranslatedLocales('name'))
             ->filter()
-            ->implode(', ');
+            ->implode(', '));
     }
-
     /**
      * Get the first available locale.
      */
-    public function getFirstAvailableLocaleAttribute(): ?string
+    protected function firstAvailableLocale(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        $locales = $this->getTranslatedLocales('name');
-        return array_shift($locales);
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: function () {
+            $locales = $this->getTranslatedLocales('name');
+            return array_shift($locales);
+        });
+    }
+    protected function casts(): array
+    {
+        return [
+            'meta' => 'array',
+            'order' => 'integer',
+        ];
     }
 }

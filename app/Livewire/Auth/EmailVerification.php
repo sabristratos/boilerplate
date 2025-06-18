@@ -15,22 +15,16 @@ class EmailVerification extends Component
 {
     /**
      * Status message after verification attempt
-     *
-     * @var string|null
      */
     public ?string $status = null;
 
     /**
      * Verification link sent status
-     *
-     * @var bool
      */
     public bool $verificationLinkSent = false;
 
     /**
      * Send a new email verification link
-     *
-     * @return void
      */
     public function sendVerificationEmail(): void
     {

@@ -32,7 +32,7 @@ class Index extends Component
 
     public function hasFilters(): bool
     {
-        return !empty($this->search) || ! is_null($this->isHierarchical);
+        return $this->search !== '' && $this->search !== '0' || ! is_null($this->isHierarchical);
     }
 
     #[On('taxonomy-saved')]
@@ -52,7 +52,7 @@ class Index extends Component
     public function delete(TaxonomyService $taxonomyService): void
     {
         Gate::authorize('delete-taxonomies');
-        if (! $this->deletingTaxonomy) {
+        if (!$this->deletingTaxonomy instanceof \App\Models\Taxonomy) {
             return;
         }
 

@@ -62,31 +62,21 @@ class AuthServiceProvider extends ServiceProvider
             return $user->hasPermission($ability) ? true : null;
         });
 
-        Gate::define('edit-role', function (User $user, Role $role) {
-            return $user->hasRole(config('roles.super_admin')) &&
-                $role->slug !== config('roles.super_admin');
-        });
+        Gate::define('edit-role', fn(User $user, Role $role) => $user->hasRole(config('roles.super_admin')) &&
+            $role->slug !== config('roles.super_admin'));
 
-        Gate::define('delete-role', function (User $user, Role $role) {
-            return $user->hasRole(config('roles.super_admin')) &&
-                $role->slug !== config('roles.super_admin');
-        });
+        Gate::define('delete-role', fn(User $user, Role $role) => $user->hasRole(config('roles.super_admin')) &&
+            $role->slug !== config('roles.super_admin'));
 
-        Gate::define('edit-user', function (User $user, User $target) {
-            return $user->hasRole(config('roles.super_admin')) &&
-                !$target->hasRole(config('roles.super_admin'));
-        });
+        Gate::define('edit-user', fn(User $user, User $target) => $user->hasRole(config('roles.super_admin')) &&
+            !$target->hasRole(config('roles.super_admin')));
 
-        Gate::define('delete-user', function (User $user, User $target) {
-            return $user->hasRole(config('roles.super_admin')) &&
-                !$target->hasRole(config('roles.super_admin'));
-        });
+        Gate::define('delete-user', fn(User $user, User $target) => $user->hasRole(config('roles.super_admin')) &&
+            !$target->hasRole(config('roles.super_admin')));
 
-        Gate::define('impersonate', function (User $user, User $target) {
-            return $user->hasRole(config('roles.super_admin')) &&
-                   !$target->hasRole(config('roles.super_admin')) &&
-                   $user->id !== $target->id;
-        });
+        Gate::define('impersonate', fn(User $user, User $target) => $user->hasRole(config('roles.super_admin')) &&
+               !$target->hasRole(config('roles.super_admin')) &&
+               $user->id !== $target->id);
 
         // Bind the StatefulGuard to the Auth facade's guard for the Logout action
         $this->app->when(Logout::class)

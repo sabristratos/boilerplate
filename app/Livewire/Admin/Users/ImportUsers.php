@@ -44,6 +44,7 @@ class ImportUsers extends Component
                 }
             }
         }
+        return null;
     }
 
     public function render()

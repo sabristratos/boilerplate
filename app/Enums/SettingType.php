@@ -37,8 +37,6 @@ enum SettingType: string
 
     /**
      * Get a human-readable name for the setting type.
-     *
-     * @return string
      */
     public function label(): string
     {

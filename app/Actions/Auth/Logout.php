@@ -12,27 +12,22 @@ use Illuminate\Support\Facades\Auth;
 class Logout
 {
     /**
-     * The guard implementation.
-     *
-     * @var \Illuminate\Contracts\Auth\StatefulGuard
-     */
-    protected StatefulGuard $guard;
-
-    /**
      * Create a new action instance.
      *
-     * @param  \Illuminate\Contracts\Auth\StatefulGuard  $guard
      * @return void
      */
-    public function __construct(StatefulGuard $guard)
+    public function __construct(
+        /**
+         * The guard implementation.
+         */
+        protected StatefulGuard $guard
+    )
     {
-        $this->guard = $guard;
     }
 
     /**
      * Log the user out of the application.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function __invoke(Request $request)
@@ -47,8 +42,6 @@ class Logout
 
     /**
      * Get the guard instance.
-     *
-     * @return \Illuminate\Contracts\Auth\StatefulGuard
      */
     public function getGuard(): StatefulGuard
     {

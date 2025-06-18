@@ -13,9 +13,6 @@ interface HasPermissions
 
     /**
      * Check if the model has the given permission.
-     *
-     * @param string $permission
-     * @return bool
      */
     public function hasPermission(string $permission): bool;
 }

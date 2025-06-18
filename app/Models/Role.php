@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Interfaces\HasPermissions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
 class Role extends Model implements HasPermissions
@@ -55,9 +56,6 @@ class Role extends Model implements HasPermissions
 
     /**
      * Check if the role has the given permission.
-     *
-     * @param string $permission
-     * @return bool
      */
     public function hasPermission(string $permission): bool
     {
@@ -67,19 +65,21 @@ class Role extends Model implements HasPermissions
     /**
      * Get the available locales as a string.
      */
-    public function getAvailableLocalesAsStringAttribute(): string
+    protected function availableLocalesAsString(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return collect($this->getTranslatedLocales('name'))
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: fn() => collect($this->getTranslatedLocales('name'))
             ->filter()
-            ->implode(', ');
+            ->implode(', '));
     }
 
     /**
      * Get the first available locale.
      */
-    public function getFirstAvailableLocaleAttribute(): ?string
+    protected function firstAvailableLocale(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        $locales = $this->getTranslatedLocales('name');
-        return array_shift($locales);
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(get: function () {
+            $locales = $this->getTranslatedLocales('name');
+            return array_shift($locales);
+        });
     }
 }

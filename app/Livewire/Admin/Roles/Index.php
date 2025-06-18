@@ -43,7 +43,7 @@ class Index extends Component
 
     public function delete(RoleService $roleService): void
     {
-        if (!$this->deletingRole) {
+        if (!$this->deletingRole instanceof \App\Models\Role) {
             return;
         }
 

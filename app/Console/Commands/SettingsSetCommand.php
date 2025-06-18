@@ -47,11 +47,11 @@ class SettingsSetCommand extends Command
         $newValue = match ($setting->type) {
             SettingType::BOOLEAN, SettingType::CHECKBOX => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             SettingType::NUMBER => filter_var($value, FILTER_VALIDATE_INT),
-            SettingType::MULTISELECT => json_decode($value, true),
+            SettingType::MULTISELECT => json_decode((string) $value, true),
             default => $value,
         };
 
-        if ($newValue === null && in_array($setting->type, [SettingType::MULTISELECT])) {
+        if ($newValue === null && $setting->type == SettingType::MULTISELECT) {
             $this->error('Invalid JSON provided for multiselect setting.');
             return;
         }

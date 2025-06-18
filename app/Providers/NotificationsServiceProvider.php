@@ -12,9 +12,7 @@ class NotificationsServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(NotificationService::class, function ($app) {
-            return new NotificationService();
-        });
+        $this->app->singleton(NotificationService::class, fn($app) => new NotificationService());
     }
 
     /**

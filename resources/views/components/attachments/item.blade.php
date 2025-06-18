@@ -4,7 +4,7 @@
     <div class="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-gray-100 dark:bg-zinc-700 rounded flex items-center justify-center">
         @if($attachment->isImage())
             <a href="{{ $attachment->url }}" class="glightbox" data-gallery="attachments-gallery" data-title="{{ $attachment->filename }}">
-                <img src="{{ $attachment->url }}?v={{ $attachment->updated_at->timestamp }}" alt="{{ $attachment->filename }}" class="h-full w-full object-cover rounded">
+                <img src="{{ $attachment->url }}?v={{ $attachment->updated_at->timestamp }}" alt="{{ $attachment->filename }}" class="h-full w-full object-cover rounded" loading="lazy">
             </a>
         @else
             <svg class="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

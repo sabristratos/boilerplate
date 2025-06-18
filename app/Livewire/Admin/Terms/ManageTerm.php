@@ -35,14 +35,14 @@ class ManageTerm extends Component
 
         if ($this->term?->exists) {
             $this->authorize('update', $this->term);
-            foreach ($this->locales as $localeCode => $localeName) {
+            foreach (array_keys($this->locales) as $localeCode) {
                 $this->name[$localeCode] = $this->term->getTranslation('name', $localeCode);
                 $this->description[$localeCode] = $this->term->getTranslation('description', $localeCode);
             }
             $this->parentId = $this->term->parent_id;
         } else {
             $this->authorize('create', [Term::class, $taxonomy]);
-            foreach ($this->locales as $localeCode => $localeName) {
+            foreach (array_keys($this->locales) as $localeCode) {
                 $this->name[$localeCode] = '';
                 $this->description[$localeCode] = '';
             }
@@ -60,7 +60,7 @@ class ManageTerm extends Component
 
         $defaultLocale = config('app.fallback_locale');
 
-        foreach ($this->locales as $localeCode => $localeName) {
+        foreach (array_keys($this->locales) as $localeCode) {
             $rules["name.{$localeCode}"] = $localeCode === $defaultLocale
                 ? 'required|string|max:255'
                 : 'nullable|string|max:255';

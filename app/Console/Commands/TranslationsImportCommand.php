@@ -30,12 +30,12 @@ class TranslationsImportCommand extends Command
         $this->info('Starting translation import...');
 
         $locales = collect(File::directories(lang_path()))
-            ->map(fn ($dir) => basename($dir));
+            ->map(fn ($dir) => basename((string) $dir));
 
         if ($locales->isEmpty()) {
             // Fallback for when translations are in json files in the root of lang/
             $jsonFiles = glob(lang_path('*.json'));
-            if (!empty($jsonFiles)) {
+            if ($jsonFiles !== [] && $jsonFiles !== false) {
                 $locales = collect($jsonFiles)
                     ->map(fn ($file) => pathinfo($file, PATHINFO_FILENAME));
             }

@@ -39,7 +39,7 @@ class Index extends Component
 
     public function hasFilters(): bool
     {
-        return !empty($this->search) || !empty($this->status) || !empty($this->role);
+        return $this->search !== '' && $this->search !== '0' || $this->status !== null && $this->status !== '' && $this->status !== '0' || $this->role !== null && $this->role !== 0;
     }
 
     #[On('user-saved')]
@@ -59,7 +59,7 @@ class Index extends Component
     public function delete(UserService $userService): void
     {
         Gate::authorize('delete-users');
-        if (!$this->deletingUser) {
+        if (!$this->deletingUser instanceof \App\Models\User) {
             return;
         }
 

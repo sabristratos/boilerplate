@@ -24,22 +24,14 @@ class SettingsService
 
     /**
      * Get all settings
-     *
-     * @return Collection
      */
     public function all(): Collection
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return Setting::all()->keyBy('key');
-        });
+        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn() => Setting::all()->keyBy('key'));
     }
 
     /**
      * Get a setting by key
-     *
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
      */
     public function get(string $key, mixed $default = null): mixed
     {
@@ -54,10 +46,6 @@ class SettingsService
 
     /**
      * Set a setting value
-     *
-     * @param string $key
-     * @param mixed $value
-     * @return bool
      */
     public function set(string $key, mixed $value): bool
     {
@@ -99,35 +87,24 @@ class SettingsService
 
     /**
      * Get all settings in a specific group
-     *
-     * @param string $groupSlug
-     * @return Collection
      */
     public function group(string $groupSlug): Collection
     {
-        return Cache::remember("settings.group.{$groupSlug}", self::CACHE_TTL, function () use ($groupSlug) {
-            return Setting::whereHas('group', function ($query) use ($groupSlug) {
-                $query->where('slug', $groupSlug);
-            })->get();
-        });
+        return Cache::remember("settings.group.{$groupSlug}", self::CACHE_TTL, fn() => Setting::whereHas('group', function ($query) use ($groupSlug) {
+            $query->where('slug', $groupSlug);
+        })->get());
     }
 
     /**
      * Get all public settings
-     *
-     * @return Collection
      */
     public function public(): Collection
     {
-        return Cache::remember('settings.public', self::CACHE_TTL, function () {
-            return Setting::where('is_public', true)->get()->keyBy('key');
-        });
+        return Cache::remember('settings.public', self::CACHE_TTL, fn() => Setting::where('is_public', true)->get()->keyBy('key'));
     }
 
     /**
      * Clear the settings cache
-     *
-     * @return void
      */
     public function clearCache(): void
     {
@@ -149,15 +126,11 @@ class SettingsService
 
     /**
      * Get all setting groups with their settings
-     *
-     * @return Collection
      */
     public function allGroups(): Collection
     {
-        return Cache::remember('settings.groups', self::CACHE_TTL, function () {
-            return \App\Models\SettingGroup::with(['settings' => function ($query) {
-                $query->orderBy('order');
-            }])->orderBy('order')->get();
-        });
+        return Cache::remember('settings.groups', self::CACHE_TTL, fn() => \App\Models\SettingGroup::with(['settings' => function ($query) {
+            $query->orderBy('order');
+        }])->orderBy('order')->get());
     }
 }

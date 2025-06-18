@@ -10,10 +10,7 @@ use Illuminate\Notifications\Notification;
 
 class NewUserWelcomeNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
-
-    public UserModel $newUser;
-    public string $generatedPassword; 
+    use Queueable; 
 
     /**
      * Create a new notification instance.
@@ -21,16 +18,13 @@ class NewUserWelcomeNotification extends Notification implements ShouldQueue
      * @param UserModel $newUser The user that was created.
      * @param string $generatedPassword The temporarily generated password for the user.
      */
-    public function __construct(UserModel $newUser, string $generatedPassword)
+    public function __construct(public UserModel $newUser, public string $generatedPassword)
     {
-        $this->newUser = $newUser;
-        $this->generatedPassword = $generatedPassword;
     }
 
     /**
      * Get the notification's delivery channels.
      *
-     * @param  mixed  $notifiable
      * @return array<int, string>
      */
     public function via(mixed $notifiable): array
@@ -40,9 +34,6 @@ class NewUserWelcomeNotification extends Notification implements ShouldQueue
 
     /**
      * Get the mail representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return \Illuminate\Notifications\Messages\MailMessage
      */
     public function toMail(mixed $notifiable): MailMessage
     {
@@ -64,7 +55,6 @@ class NewUserWelcomeNotification extends Notification implements ShouldQueue
      * This is useful if you also want to store this notification in the database for the user,
      * though the primary channel is email.
      *
-     * @param  mixed  $notifiable
      * @return array<string, mixed>
      */
     public function toArray(mixed $notifiable): array

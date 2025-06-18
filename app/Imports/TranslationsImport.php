@@ -9,10 +9,8 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class TranslationsImport implements ToModel, WithHeadingRow
 {
     /**
-    * @param array $row
-    *
-    * @return void
-    */
+     * @return void
+     */
     public function model(array $row)
     {
         $key = $row['original_value'] ?? null;
@@ -24,7 +22,7 @@ class TranslationsImport implements ToModel, WithHeadingRow
         $localesData = array_diff_key($row, ['original_value' => '']);
 
         foreach ($localesData as $locale => $value) {
-            if (empty($locale)) {
+            if ($locale === 0 || ($locale === '' || $locale === '0')) {
                 continue;
             }
 

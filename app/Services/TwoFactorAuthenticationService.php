@@ -22,7 +22,6 @@ class TwoFactorAuthenticationService
     /**
      * Create a new two factor authentication service instance.
      *
-     * @param  \PragmaRX\Google2FA\Google2FA  $engine
      * @return void
      */
     public function __construct(Google2FA $engine)
@@ -32,8 +31,6 @@ class TwoFactorAuthenticationService
 
     /**
      * Generate a new secret key.
-     *
-     * @return string
      */
     public function generateSecretKey(): string
     {
@@ -42,8 +39,6 @@ class TwoFactorAuthenticationService
 
     /**
      * Generate a new recovery code array.
-     *
-     * @return array
      */
     public function generateRecoveryCodes(): array
     {
@@ -58,8 +53,6 @@ class TwoFactorAuthenticationService
 
     /**
      * Generate a new recovery code.
-     *
-     * @return string
      */
     protected function generateRecoveryCode(): string
     {
@@ -68,11 +61,6 @@ class TwoFactorAuthenticationService
 
     /**
      * Get the QR code SVG for the given secret key.
-     *
-     * @param  string  $companyName
-     * @param  string  $companyEmail
-     * @param  string  $secret
-     * @return string
      */
     public function qrCodeSvg(string $companyName, string $companyEmail, string $secret): string
     {
@@ -88,10 +76,6 @@ class TwoFactorAuthenticationService
 
     /**
      * Verify the given code.
-     *
-     * @param  string  $secret
-     * @param  string  $code
-     * @return bool
      */
     public function verify(string $secret, string $code): bool
     {

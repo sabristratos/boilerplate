@@ -204,4 +204,8 @@
     </div>
 
     @livewire('admin.notifications.notification-flyout')
+
+    @persist('toast')
+        <flux:toast />
+    @endpersist
 </x-layouts.base> 

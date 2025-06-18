@@ -17,22 +17,16 @@ class Login extends Component
 {
     /**
      * User's email address
-     *
-     * @var string
      */
     public string $email = '';
 
     /**
      * User's password
-     *
-     * @var string
      */
     public string $password = '';
 
     /**
      * Remember me checkbox state
-     *
-     * @var bool
      */
     public bool $remember = false;
 
@@ -65,8 +59,6 @@ class Login extends Component
 
     /**
      * Attempt to authenticate the user
-     *
-     * @return void
      */
     public function login(): void
     {

@@ -33,14 +33,14 @@ class ManageRole extends Component
 
         if ($this->role?->exists) {
             $this->authorize('update', $this->role);
-            foreach ($this->locales as $localeCode => $localeName) {
+            foreach (array_keys($this->locales) as $localeCode) {
                 $this->name[$localeCode] = $this->role->getTranslation('name', $localeCode);
                 $this->description[$localeCode] = $this->role->getTranslation('description', $localeCode);
             }
             $this->selectedPermissions = $this->role->permissions->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         } else {
             $this->authorize('create', Role::class);
-            foreach ($this->locales as $localeCode => $localeName) {
+            foreach (array_keys($this->locales) as $localeCode) {
                 $this->name[$localeCode] = '';
                 $this->description[$localeCode] = '';
             }
@@ -53,7 +53,7 @@ class ManageRole extends Component
             'selectedPermissions' => 'array',
         ];
 
-        foreach ($this->locales as $localeCode => $localeName) {
+        foreach (array_keys($this->locales) as $localeCode) {
             $rules["name.{$localeCode}"] = 'required|string|max:255';
             $rules["description.{$localeCode}"] = 'nullable|string|max:255';
         }

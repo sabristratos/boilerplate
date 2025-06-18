@@ -18,8 +18,6 @@ class ImpersonationController extends Controller
     /**
      * Start impersonating a user.
      *
-     * @param \App\Models\User $user
-     * @return \Illuminate\Http\RedirectResponse
      * @throws \Exception
      */
     public function start(User $user, ImpersonationService $impersonationService): RedirectResponse
@@ -37,8 +35,6 @@ class ImpersonationController extends Controller
 
     /**
      * Stop impersonating a user.
-     *
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function stop(ImpersonationService $impersonationService): RedirectResponse
     {

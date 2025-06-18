@@ -4,8 +4,9 @@ namespace App\Models\Traits;
 
 use App\Models\Attachment;
 use App\Services\AttachmentService;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 trait HasAttachments
@@ -13,11 +14,11 @@ trait HasAttachments
     /**
      * Get all attachments for the model.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany<\App\Models\Attachment, $this>
+     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\App\Models\Attachment>
      */
-    public function attachments(): MorphMany
+    public function attachments(): MorphToMany
     {
-        return $this->morphMany(Attachment::class, 'attachable');
+        return $this->morphToMany(Attachment::class, 'attachable');
     }
 
     /**
@@ -26,9 +27,7 @@ trait HasAttachments
     public function getAttachments(?string $collection = null)
     {
         return $this->attachments()
-            ->when($collection, function ($query) use ($collection) {
-                return $query->where('collection', $collection);
-            })
+            ->when($collection, fn($query) => $query->where('collection', $collection))
             ->get();
     }
 
@@ -38,7 +37,9 @@ trait HasAttachments
     public function addAttachment(UploadedFile $file, ?string $collection = null, array $meta = [], array $options = [])
     {
         $service = app(AttachmentService::class);
-        return $service->upload($file, $this, $collection, $meta, $options);
+        $attachment = $service->upload($file, $collection, $meta, $options);
+        $this->attachments()->attach($attachment->id);
+        return $attachment;
     }
 
     /**
@@ -46,12 +47,20 @@ trait HasAttachments
      */
     public function removeAttachment(Attachment $attachment)
     {
-        if ($this->attachments()->where('id', $attachment->id)->exists()) {
-            $service = app(AttachmentService::class);
-            return $service->delete($attachment);
+        // Detach the attachment from the current model.
+        $this->attachments()->detach($attachment->id);
+
+        // Check if the attachment is still linked to any other models.
+        $isOrphaned = DB::table('attachables')
+            ->where('attachment_id', $attachment->id)
+            ->doesntExist();
+            
+        // If it's orphaned, delete the attachment record and the physical file.
+        if ($isOrphaned) {
+            $attachment->delete();
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -59,17 +68,11 @@ trait HasAttachments
      */
     public function removeAllAttachments(?string $collection = null)
     {
-        $service = app(AttachmentService::class);
         $attachments = $this->attachments()
-            ->when($collection, function ($query) use ($collection) {
-                return $query->where('collection', $collection);
-            })
+            ->when($collection, fn($query) => $query->where('collection', $collection))
             ->get();
-
-        foreach ($attachments as $attachment) {
-            /** @var Attachment $attachment */
-            $service->delete($attachment);
-        }
+            
+        $this->attachments()->detach($attachments->pluck('id'));
 
         return true;
     }

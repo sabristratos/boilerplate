@@ -17,45 +17,31 @@ class ResetPassword extends Component
 {
     /**
      * The password reset token
-     *
-     * @var string
      */
     public string $token = '';
 
     /**
      * User's email address
-     *
-     * @var string
      */
     public string $email = '';
 
     /**
      * User's new password
-     *
-     * @var string
      */
     public string $password = '';
 
     /**
      * Password confirmation
-     *
-     * @var string
      */
     public string $password_confirmation = '';
 
     /**
      * Status message after form submission
-     *
-     * @var string|null
      */
     public ?string $status = null;
 
     /**
      * Mount the component with the token and email
-     *
-     * @param string $token
-     * @param string|null $email
-     * @return void
      */
     public function mount(string $token, ?string $email = null): void
     {
@@ -95,8 +81,6 @@ class ResetPassword extends Component
 
     /**
      * Reset the user's password
-     *
-     * @return void
      */
     public function resetPassword(): void
     {

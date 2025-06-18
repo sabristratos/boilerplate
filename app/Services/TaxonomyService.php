@@ -16,16 +16,12 @@ class TaxonomyService
 
     public function all(): Collection
     {
-        return Cache::remember('taxonomies.all', self::CACHE_TTL, function () {
-            return Taxonomy::with('terms')->get();
-        });
+        return Cache::remember('taxonomies.all', self::CACHE_TTL, fn() => Taxonomy::with('terms')->get());
     }
 
     public function find(int $id): ?Taxonomy
     {
-        return Cache::remember("taxonomies.{$id}", self::CACHE_TTL, function () use ($id) {
-            return Taxonomy::with('terms')->find($id);
-        });
+        return Cache::remember("taxonomies.{$id}", self::CACHE_TTL, fn() => Taxonomy::with('terms')->find($id));
     }
 
     public function create(array $data): Taxonomy

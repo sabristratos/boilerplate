@@ -15,9 +15,7 @@ class PermissionService
 
     public function all(): Collection
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return Permission::all();
-        });
+        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn() => Permission::all());
     }
 
     public function clearCache(): void

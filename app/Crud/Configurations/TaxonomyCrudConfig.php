@@ -111,7 +111,7 @@ class TaxonomyCrudConfig implements CrudConfigInterface
 
     protected function getLocales(): array
     {
-        $availableLocales = json_decode(Settings::get('available_languages', '[]'), true) ?: [];
+        $availableLocales = json_decode((string) Settings::get('available_languages', '[]'), true) ?: [];
         $allLocales = config('app.available_locales', []);
 
         return array_intersect_key($allLocales, array_flip($availableLocales));

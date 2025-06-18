@@ -42,14 +42,9 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasAttachments, HasTaxonomies;
 
-    protected $appends = [
-        'avatar_url',
-    ];
-
-    public function getAvatarUrlAttribute(): string
+    public function getAvatarUrl(): string
     {
-        $avatar = $this->attachments()->where('collection', 'avatar')->first();
-
+        $avatar = $this->getAttachments('avatars')->first();
         if ($avatar) {
             return $avatar->url;
         }
@@ -59,8 +54,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Determine if two-factor authentication has been enabled.
-     *
-     * @return bool
      */
     public function hasTwoFactorEnabled(): bool
     {
@@ -69,8 +62,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Determine if two-factor authentication has been confirmed.
-     *
-     * @return bool
      */
     public function hasConfirmedTwoFactor(): bool
     {
@@ -79,9 +70,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Get the two-factor authentication QR code URL.
-     *
-     * @param string $companyName
-     * @return string|null
      */
     public function twoFactorQrCodeSvg(string $companyName = 'TALL Boilerplate'): ?string
     {
@@ -100,8 +88,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Enable two-factor authentication for the user.
-     *
-     * @return void
      */
     public function enableTwoFactorAuthentication(): void
     {
@@ -114,8 +100,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Confirm two-factor authentication for the user.
-     *
-     * @return void
      */
     public function confirmTwoFactorAuthentication(): void
     {
@@ -125,8 +109,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Disable two-factor authentication for the user.
-     *
-     * @return void
      */
     public function disableTwoFactorAuthentication(): void
     {
@@ -138,9 +120,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Validate the given two-factor authentication code.
-     *
-     * @param string $code
-     * @return bool
      */
     public function validateTwoFactorCode(string $code): bool
     {
@@ -157,9 +136,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Validate a two-factor authentication recovery code.
-     *
-     * @param string $code
-     * @return bool
      */
     public function validateTwoFactorRecoveryCode(string $code): bool
     {
@@ -236,9 +212,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Check if the user has the given role.
-     *
-     * @param string $role
-     * @return bool
      */
     public function hasRole(string $role): bool
     {
@@ -247,9 +220,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Check if the user has any of the given roles.
-     *
-     * @param array $roles
-     * @return bool
      */
     public function hasAnyRole(array $roles): bool
     {
@@ -258,9 +228,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Check if the user has all of the given roles.
-     *
-     * @param array $roles
-     * @return bool
      */
     public function hasAllRoles(array $roles): bool
     {
@@ -269,9 +236,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Check if the user has the given permission through any of their roles.
-     *
-     * @param string $permission
-     * @return bool
      */
     public function hasPermission(string $permission): bool
     {
@@ -282,9 +246,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Check if the user has any of the given permissions through any of their roles.
-     *
-     * @param array $permissions
-     * @return bool
      */
     public function hasAnyPermission(array $permissions): bool
     {
@@ -295,9 +256,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
 
     /**
      * Check if the user has all of the given permissions through any of their roles.
-     *
-     * @param array $permissions
-     * @return bool
      */
     public function hasAllPermissions(array $permissions): bool
     {

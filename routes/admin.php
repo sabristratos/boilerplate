@@ -4,16 +4,15 @@ use App\Http\Controllers\ImpersonationController;
 use App\Livewire\Admin\ActivityLogManagement;
 use App\Livewire\Admin\AnalyticsDashboard;
 use App\Livewire\Admin\AttachmentManagement;
+use App\Livewire\Admin\ManageAttachment;
 use App\Livewire\Admin\Roles\Index as RoleIndex;
 use App\Livewire\Admin\Roles\ManageRole;
-use App\Livewire\Admin\SettingsManagement;
+use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use App\Livewire\Admin\Taxonomies\Index as TaxonomyIndex;
 use App\Livewire\Admin\Taxonomies\ManageTaxonomy;
 use App\Livewire\Admin\Terms\Index as TermIndex;
 use App\Livewire\Admin\Terms\ManageTerm;
-use App\Livewire\Admin\Users\Index as UserIndex;
-use App\Livewire\Admin\Users\ImportUsers;
-use App\Livewire\Admin\Users\ManageUser;
+use App\Livewire\Admin\UploadAttachments;
 use App\Livewire\Admin\UserProfile;
 use App\Livewire\Admin\NotificationManagement;
 use App\Livewire\Admin\Translations\ManageTranslations;
@@ -33,14 +32,6 @@ Route::get('/profile', UserProfile::class)->name('profile');
 
 Route::middleware(['can:viewAny,App\Models\User'])->group(function () {
     Route::get('/', AnalyticsDashboard::class)->name('dashboard');
-});
-
-// User Management
-Route::middleware(['can:viewAny,App\Models\User'])->group(function () {
-    Route::get('/users', UserIndex::class)->name('users.index');
-    Route::get('/users/import', ImportUsers::class)->name('users.import')->middleware('can:create,App\Models\User');
-    Route::get('/users/create', ManageUser::class)->name('users.create')->middleware('can:create,App\Models\User');
-    Route::get('/users/{user}/edit', ManageUser::class)->name('users.edit')->middleware('can:update,user');
 });
 
 // Role Management
@@ -63,7 +54,7 @@ Route::middleware(['can:viewAny,App\Models\Taxonomy'])->group(function () {
 });
 
 // Settings Management
-Route::get('/settings', SettingsManagement::class)
+Route::get('/settings', SettingsIndex::class)
     ->name('settings')
     ->middleware('can:viewAny,App\Models\Setting');
 
@@ -74,6 +65,9 @@ Route::get('/translations', ManageTranslations::class)->name('translations.index
 Route::get('/attachments', AttachmentManagement::class)
     ->name('attachments')
     ->middleware('can:viewAny,App\Models\Attachment');
+Route::get('/attachments/{attachment}/edit', ManageAttachment::class)
+    ->name('attachments.edit')
+    ->middleware('can:update,attachment');
 
 // Activity Log Management
 Route::get('/activity-logs', ActivityLogManagement::class)
