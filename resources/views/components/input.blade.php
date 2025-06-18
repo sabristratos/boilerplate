@@ -5,7 +5,6 @@
     'id' => null,
     'helperText' => null,
     'icon' => null,
-    'iconStyle' => 'o', // 'o' for outline, 's' for solid
 ])
 
 @php
@@ -30,15 +29,22 @@
     {{-- Label --}}
     <label for="{{ $id }}" class="block text-sm font-medium leading-6 text-zinc-900 dark:text-zinc-100">{{ $label }}</label>
 
-    <div class="relative mt-2">
+    <div
+        class="relative mt-2"
+        @if($isPassword)
+        x-data="{
+            visible: false,
+            toggleVisibility() {
+                this.visible = !this.visible;
+                this.$refs.input.type = this.visible ? 'text' : 'password';
+            }
+        }"
+        @endif
+    >
         {{-- Leading Icon (now dynamically included) --}}
         @if ($icon)
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                @php
-                    // Construct the dynamic component tag for the Heroicon
-                    $iconComponent = 'heroicon-' . e($iconStyle) . '-' . e($icon);
-                @endphp
-                <x-dynamic-component :component="$iconComponent" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <flux:icon :name="$icon" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
             </div>
         @endif
 
@@ -48,35 +54,19 @@
             name="{{ $name }}"
             id="{{ $id }}"
             {{ $attributes->merge(['class' => "{$inputClasses} {$ringClasses}"]) }}
+            @if($isPassword) x-ref="input" @endif
         >
 
         {{-- Password Visibility Toggle --}}
         @if ($isPassword)
-            <div id="toggle-{{ $id }}" class="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3">
-                {{-- Eye Icon (Visible by default) --}}
-                <x-heroicon-o-eye id="eye-icon-{{ $id }}" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
-                {{-- Eye Slash Icon (Hidden by default) --}}
-                <x-heroicon-o-eye-slash id="eye-slash-icon-{{ $id }}" class="h-5 w-5 text-zinc-500 dark:text-zinc-400 hidden" />
-            </div>
-
-            <script>
-                // Script is scoped to this specific component instance
-                (function() {
-                    const passwordInput = document.getElementById('{{ $id }}');
-                    const toggle = document.getElementById('toggle-{{ $id }}');
-                    const eyeIcon = document.getElementById('eye-icon-{{ $id }}');
-                    const eyeSlashIcon = document.getElementById('eye-slash-icon-{{ $id }}');
-
-                    if (passwordInput && toggle && eyeIcon && eyeSlashIcon) {
-                        toggle.addEventListener('click', function() {
-                            const isPassword = passwordInput.type === 'password';
-                            passwordInput.type = isPassword ? 'text' : 'password';
-                            eyeIcon.classList.toggle('hidden', isPassword);
-                            eyeSlashIcon.classList.toggle('hidden', !isPassword);
-                        });
-                    }
-                })();
-            </script>
+            <button type="button" x-on:click="toggleVisibility" class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <template x-if="!visible">
+                    <flux:icon name="eye" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                </template>
+                <template x-if="visible">
+                    <flux:icon name="eye-slash" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                </template>
+            </button>
         @endif
     </div>
 

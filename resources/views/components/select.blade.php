@@ -4,7 +4,6 @@
     'id' => null,
     'helperText' => null,
     'icon' => null,
-    'iconStyle' => 'o',
 ])
 
 @php
@@ -34,10 +33,7 @@
         {{-- Leading Icon --}}
         @if ($icon)
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                @php
-                    $iconComponent = 'heroicon-' . e($iconStyle) . '-' . e($icon);
-                @endphp
-                <x-dynamic-component :component="$iconComponent" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                <flux:icon :name="$icon" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
             </div>
         @endif
 
@@ -51,8 +47,8 @@
         </select>
 
         {{-- Custom Dropdown Arrow --}}
-        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <x-heroicon-o-chevron-up-down class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+            <flux:icon name="chevron-up-down" class="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
         </div>
     </div>
 

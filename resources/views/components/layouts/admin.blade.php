@@ -19,6 +19,7 @@
                         <flux:navlist.item href="{{ route('admin.translations.index') }}" :current="request()->routeIs('admin.translations.index')">{{ __('Translations') }}</flux:navlist.item>
                         @can('viewAny', \App\Models\Taxonomy::class)
                         <flux:navlist.item href="{{ route('admin.taxonomies.index') }}" :current="request()->routeIs('admin.taxonomies.*')">{{ __('Taxonomies') }}</flux:navlist.item>
+                        <flux:navlist.item href="{{ route('admin.crud.index', ['alias' => 'taxonomies']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'taxonomies'">{{ __('CRUD Taxonomies') }}</flux:navlist.item>
                         @endcan
                         @can('view-legal-pages')
                         <flux:navlist.item href="{{ route('admin.legal-pages.index') }}" :current="request()->routeIs('admin.legal-pages.*')">{{ __('Legal') }}</flux:navlist.item>
@@ -27,6 +28,7 @@
                     <flux:navlist.group expandable heading="{{ __('User Management') }}" class="grid">
                         @can('view-users')
                         <flux:navlist.item href="{{ route('admin.users.index') }}" :current="request()->routeIs('admin.users.*')">{{ __('All Users') }}</flux:navlist.item>
+                        <flux:navlist.item href="{{ route('admin.crud.index', ['alias' => 'users']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'users'">{{ __('CRUD Users') }}</flux:navlist.item>
                         @endcan
                         @can('view-roles')
                         <flux:navlist.item href="{{ route('admin.roles.index') }}" :current="request()->routeIs('admin.roles.*')">{{ __('Roles & Permissions') }}</flux:navlist.item>

@@ -128,5 +128,11 @@
             <livewire:stop-impersonation />
         </div>
     @endif
+
+    @livewire('stop-impersonation')
+
+    @persist('toast')
+        <flux:toast />
+    @endpersist
 </body>
 </html> 

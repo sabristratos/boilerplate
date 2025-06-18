@@ -42,7 +42,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasAttachments, HasTaxonomies;
 
-    public function getAvatarUrl(): string
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    public function getAvatarUrlAttribute(): string
     {
         $avatar = $this->attachments()->where('collection', 'avatar')->first();
 
@@ -187,6 +191,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasRoles, Attacha
         'email',
         'password',
         'status',
+        'password_confirmation',
         'notification_preferences',
     ];
 

@@ -8,4 +8,5 @@ return [
     App\Providers\SettingsServiceProvider::class,
     App\Providers\NotificationsServiceProvider::class,
     App\Providers\ActivityLoggerServiceProvider::class,
+    App\Providers\CrudServiceProvider::class,
 ];

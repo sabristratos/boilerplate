@@ -19,6 +19,8 @@ use App\Livewire\Admin\Users\ManageUser;
 use App\Livewire\Admin\UserProfile;
 use App\Livewire\Admin\NotificationManagement;
 use App\Livewire\Admin\Translations\ManageTranslations;
+use App\Livewire\Admin\Crud\Index as CrudIndex;
+use App\Livewire\Admin\Crud\Form as CrudForm;
 use Illuminate\Support\Facades\Route;
 
 // Impersonation routes
@@ -90,6 +92,13 @@ Route::middleware(['can:viewAny,App\Models\LegalPage'])->group(function () {
     Route::get('/legal-pages', LegalPageManagement::class)->name('legal-pages.index');
     Route::get('/legal-pages/create', EditLegalPage::class)->name('legal-pages.create')->middleware('can:create,App\Models\LegalPage');
     Route::get('/legal-pages/{legalPage}/edit', EditLegalPage::class)->name('legal-pages.edit')->middleware('can:update,legalPage');
+});
+
+// Generic CRUD Routes
+Route::prefix('crud/{alias}')->name('crud.')->group(function () {
+    Route::get('/', CrudIndex::class)->name('index');
+    Route::get('/create', CrudForm::class)->name('create');
+    Route::get('/{id}/edit', CrudForm::class)->name('edit');
 });
 
 // Add more admin routes here as needed 
