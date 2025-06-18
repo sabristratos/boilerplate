@@ -5,8 +5,6 @@ use App\Livewire\Admin\ActivityLogManagement;
 use App\Livewire\Admin\AnalyticsDashboard;
 use App\Livewire\Admin\AttachmentManagement;
 use App\Livewire\Admin\ManageAttachment;
-use App\Livewire\Admin\Roles\Index as RoleIndex;
-use App\Livewire\Admin\Roles\ManageRole;
 use App\Livewire\Admin\Settings\Index as SettingsIndex;
 use App\Livewire\Admin\Taxonomies\Index as TaxonomyIndex;
 use App\Livewire\Admin\Taxonomies\ManageTaxonomy;
@@ -32,13 +30,6 @@ Route::get('/profile', UserProfile::class)->name('profile');
 
 Route::middleware(['can:viewAny,App\Models\User'])->group(function () {
     Route::get('/', AnalyticsDashboard::class)->name('dashboard');
-});
-
-// Role Management
-Route::middleware(['can:viewAny,App\Models\Role'])->group(function () {
-    Route::get('/roles', RoleIndex::class)->name('roles.index');
-    Route::get('/roles/create', ManageRole::class)->name('roles.create')->middleware('can:create,App\Models\Role');
-    Route::get('/roles/{role}/edit', ManageRole::class)->name('roles.edit')->middleware('can:update,role');
 });
 
 // Taxonomy Management

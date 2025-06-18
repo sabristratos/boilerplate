@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Crud;
 
 use App\Crud\CrudConfigInterface;
 use App\Events\Crud\EntityDeleted;
+use App\Facades\ActivityLogger;
 use App\Livewire\Traits\WithFiltering;
 use App\Services\ImpersonationService;
 use Flux\Flux;
@@ -122,6 +123,13 @@ class Index extends Component
             $model = $modelClass::findOrFail($this->confirmingDeleteId);
             $entityName = $this->config->getEntityName();
 
+            ActivityLogger::logDeleted(
+                $model,
+                auth()->user(),
+                $model->toArray(),
+                $this->config->getAlias()
+            );
+
             $model->delete();
 
             event(new EntityDeleted($model, auth()->user()));
@@ -178,6 +186,14 @@ class Index extends Component
 
         if (count($this->config->getEagerLoadRelations()) > 0) {
             $query->with($this->config->getEagerLoadRelations());
+        }
+
+        // Automatically add withCount for columns ending in _count
+        foreach ($this->config->getTableColumns() as $column) {
+            if (str_ends_with($column['key'], '_count')) {
+                $relation = str_replace('_count', '', $column['key']);
+                $query->withCount($relation);
+            }
         }
 
         if ($this->sortBy !== '' && $this->sortBy !== '0') {

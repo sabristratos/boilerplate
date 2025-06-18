@@ -84,7 +84,7 @@ interface CrudConfigInterface
     /**
      * Get the validation rules for the form.
      */
-    public function getValidationRules(Model $model): array;
+    public function getValidationRules(Model $model, string $currentLocale): array;
 
     /**
      * Get the custom actions for the entity.

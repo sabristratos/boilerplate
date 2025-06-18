@@ -135,7 +135,7 @@ class UserCrudConfig implements CrudConfigInterface
         return [];
     }
 
-    public function getValidationRules(Model $model): array
+    public function getValidationRules(Model $model, string $currentLocale): array
     {
         return [
             'name' => 'required|string|max:255',

@@ -143,15 +143,15 @@ class LegalPageCrudConfig implements CrudConfigInterface
         return config('app.available_locales', []);
     }
 
-    public function getValidationRules(Model $model): array
+    public function getValidationRules(Model $model, string $currentLocale): array
     {
         return [
             'title' => 'required|array',
-            'title.*' => 'required|string|max:255',
+            'title.' . $currentLocale => 'required|string|max:255',
             'slug' => 'required|array',
             'slug.*' => 'required|string|max:255',
             'content' => 'required|array',
-            'content.*' => 'required|string',
+            'content.' . $currentLocale => 'required|string',
             'is_published' => 'boolean',
         ];
     }

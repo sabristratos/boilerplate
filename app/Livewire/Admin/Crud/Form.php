@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Crud;
 
 use App\Crud\CrudConfigInterface;
+use App\Facades\ActivityLogger;
 use App\Facades\Settings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -76,6 +77,8 @@ class Form extends Component
                 foreach ($this->getLocales() as $locale => $localeName) {
                     $this->data[$fieldName][$locale] = $this->model->getTranslation($fieldName, $locale, false) ?? '';
                 }
+            } elseif (isset($field['relationship'])) {
+                $this->data[$fieldName] = $this->model->{$field['relationship']}->pluck('id')->toArray();
             } elseif (!isset($field['persist']) || $field['persist'] !== false) {
                 $this->data[$fieldName] = $this->model->getAttribute($fieldName) ?? $field['default'] ?? null;
             } else {
@@ -98,63 +101,70 @@ class Form extends Component
         $this->validate();
         $this->authorize($this->model->exists ? 'update' : 'create', $this->model);
 
-        $allFields = collect($this->config->getFormFields());
-        $fileUploadFields = $allFields->whereIn('type', ['file_upload', 'circular']);
-        $definedFieldNames = $allFields->pluck('name')->all();
+        $isCreating = !$this->model->exists;
+        $oldValues = $isCreating ? [] : $this->model->toArray();
 
-        $formData = collect($this->data)
-            ->except($fileUploadFields->pluck('name')->all())
-            ->only($definedFieldNames)
-            ->all();
+        // Prepare data for saving
+        $formData = collect($this->data);
+        $persistentData = [];
+        $relationshipData = [];
 
-        $this->model = $this->config->beforeSave($this->model, $formData);
+        foreach ($this->config->getFormFields() as $field) {
+            $fieldName = $field['name'];
+            if (!$formData->has($fieldName)) continue;
 
-        DB::transaction(function () use ($formData, $fileUploadFields) {
-            $relationshipData = [];
-            $persistentData = $formData;
+            $value = $formData->get($fieldName);
 
-            foreach ($this->config->getFormFields() as $field) {
-                if (isset($field['relationship'])) {
-                    if (array_key_exists($field['name'], $persistentData)) {
-                        $relationshipData[$field['relationship']] = $persistentData[$field['name']];
-                        unset($persistentData[$field['name']]);
-                    }
-                }
-
-                if (isset($field['persist']) && $field['persist'] === false) {
-                    if (array_key_exists($field['name'], $persistentData)) {
-                        unset($persistentData[$field['name']]);
-                    }
-                }
+            if (isset($field['relationship'])) {
+                $relationshipData[$field['relationship']] = $value;
+                continue;
             }
 
-            if ($this->model->exists) {
-                $this->model->update($persistentData);
+            if (isset($field['persist']) && $field['persist'] === false) {
+                continue;
+            }
+
+            if ($field['translatable'] ?? false) {
+                $this->model->setTranslations($fieldName, $value);
             } else {
-                $this->model->fill($persistentData);
-                $this->model->save();
+                $persistentData[$fieldName] = $value;
             }
+        }
 
+        $this->model->fill($persistentData);
+        $this->model = $this->config->beforeSave($this->model, $this->data);
+
+        DB::transaction(function () use ($relationshipData) {
+            $this->model->save();
+
+            // Handle relationships
             foreach ($relationshipData as $relationship => $values) {
                 $this->model->{$relationship}()->sync($values ?? []);
             }
 
             // Handle file uploads
+            $fileUploadFields = collect($this->config->getFormFields())
+                ->whereIn('type', ['file_upload', 'circular']);
             foreach ($fileUploadFields as $field) {
                 $modelName = $field['name'];
                 if (isset($this->data[$modelName]) && !empty($this->data[$modelName])) {
                     $files = Arr::wrap($this->data[$modelName]);
-
                     if (!($field['multiple'] ?? false)) {
                         $this->model->removeAllAttachments($field['collection']);
                     }
-
                     foreach ($files as $file) {
                         $this->model->addAttachment($file, $field['collection']);
                     }
                 }
             }
         });
+
+        // Activity Logging
+        if ($isCreating) {
+            ActivityLogger::logCreated($this->model, auth()->user(), $this->model->toArray(), $this->config->getAlias());
+        } else {
+            ActivityLogger::logUpdated($this->model, auth()->user(), ['old' => $oldValues, 'new' => $this->model->toArray()], $this->config->getAlias());
+        }
 
         Flux::toast(__('Saved successfully!'), variant: 'success');
     }
@@ -190,7 +200,7 @@ class Form extends Component
     public function rules(): array
     {
         $this->initConfig();
-        return collect($this->config->getValidationRules($this->model))
+        return collect($this->config->getValidationRules($this->model, $this->currentLocale))
             ->mapWithKeys(fn ($value, $key) => ['data.' . $key => $value])
             ->all();
     }

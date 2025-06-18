@@ -29,7 +29,7 @@
                         <flux:navlist.item icon="user-group" href="{{ route('admin.crud.index', ['alias' => 'users']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'users'">{{ __('Users') }}</flux:navlist.item>
                         @endcan
                         @can('view-roles')
-                        <flux:navlist.item icon="key" href="{{ route('admin.roles.index') }}" :current="request()->routeIs('admin.roles.*')">{{ __('Roles & Permissions') }}</flux:navlist.item>
+                        <flux:navlist.item icon="key" href="{{ route('admin.crud.index', ['alias' => 'roles']) }}" :current="request()->routeIs('admin.crud.index') && request('alias') === 'roles'">{{ __('Roles & Permissions') }}</flux:navlist.item>
                         @endcan
                     </flux:navlist.group>
                     <flux:navlist.group icon="computer-desktop" expandable heading="{{ __('System') }}">

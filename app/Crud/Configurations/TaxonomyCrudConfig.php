@@ -149,11 +149,11 @@ class TaxonomyCrudConfig implements CrudConfigInterface
         return [];
     }
 
-    public function getValidationRules(Model $model): array
+    public function getValidationRules(Model $model, string $currentLocale): array
     {
         return [
             'name' => 'required|array',
-            'name.*' => 'required|string|max:255',
+            'name.' . $currentLocale => 'required|string|max:255',
             'description' => 'nullable|array',
             'description.*' => 'nullable|string',
             'hierarchical' => 'boolean',
